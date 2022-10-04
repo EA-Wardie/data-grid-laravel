@@ -24,7 +24,7 @@ trait DynamicCompare
             return $this->$method($valueA, $valueB);
         }
 
-        throw new Exception('Unknown Dynamic Operator "' . $operation . '"');
+        throw new Exception('Unknown Dynamic Operator "'.$operation.'"');
     }
 
     private function equal($valueA, $valueB): bool

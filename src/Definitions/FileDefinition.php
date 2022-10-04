@@ -7,10 +7,15 @@ use Illuminate\Contracts\Support\Arrayable;
 class FileDefinition implements Arrayable
 {
     private string $value;
+
     private string $icon = 'mdi-file';
+
     private string $tooltip;
+
     private bool $canOpen = false;
+
     private bool $openInNewTab = false;
+
     private bool $canDownload = false;
 
     public function __construct()

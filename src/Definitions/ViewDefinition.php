@@ -10,6 +10,7 @@ class ViewDefinition implements Arrayable
 {
     //all view properties
     private array $columns = [];
+
     private string $label = '';
 
     public function __construct()
@@ -73,6 +74,6 @@ class ViewDefinition implements Arrayable
     //validates view label
     private function validateLabel()
     {
-        throw_if(!$this->label, 'A view label is required. Use label() to add one.');
+        throw_if(! $this->label, 'A view label is required. Use label() to add one.');
     }
 }
