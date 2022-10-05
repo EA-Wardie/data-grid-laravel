@@ -1,12 +1,11 @@
 <?php
 
-
 namespace Eawardie\DataGrid\Constants;
-
 
 class DataGridConstants
 {
     const NULL = 'No Value';
+
     const AGGREGATES = [
         'AVG(',
         'BIT_AND(',

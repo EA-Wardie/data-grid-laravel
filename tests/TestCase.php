@@ -2,9 +2,9 @@
 
 namespace Eawardie\DataGrid\Tests;
 
+use Eawardie\DataGrid\DataGridServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Eawardie\DataGrid\DataGridServiceProvider;
 
 class TestCase extends Orchestra
 {

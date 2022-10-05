@@ -20,29 +20,48 @@ class DataGrid
 {
     //all data grid properties
     private Builder $query;
+
     private ?Collection $existingConfig;
+
     private ?Collection $request;
+
     private ?string $ref;
+
     private int $page = 1;
+
     private int $itemsPerPage = 50;
+
     private int $totalItems = 0;
+
     private int $totalPages = 0;
+
     private array $search = [
         'term' => '',
         'initial' => true,
         'recommendations' => [],
         'queries' => [],
     ];
+
     private array $sortBy = [];
+
     private array $filters = [];
+
     private array $columns = [];
+
     private array $items = [];
+
     private array $layouts = [];
+
     private array $metaData = [];
+
     private bool $filterWithConfig = false;
+
     private bool $searchWithSession = false;
+
     private bool $sortWithSession = false;
+
     private bool $pageWithSession = false;
+
     private bool $hyperlinks = false;
 
     //indicates column types that are accepted as advanced
@@ -204,10 +223,11 @@ class DataGrid
 
         if ($type === 'enum') {
             $cloned = clone $this->query;
-            $enumerators = $cloned->select(DB::raw('DISTINCT ' . $value . ' AS value'))
+            $enumerators = $cloned->select(DB::raw('DISTINCT '.$value.' AS value'))
                 ->get()
                 ->mapWithKeys(function ($item) {
                     $text = implode(' ', array_map('ucfirst', explode('_', $item->value)));
+
                     return [$item->value => $text];
                 })
                 ->toArray();
@@ -240,7 +260,7 @@ class DataGrid
                 'operator' => null,
                 'default' => true,
             ]];
-        } else if ($icon instanceof Closure) {
+        } elseif ($icon instanceof Closure) {
             $iconMap = $icon(new IconDefinition())->toArray();
         }
 
@@ -268,7 +288,8 @@ class DataGrid
 
         $this->layouts = collect($layoutDefinitions)->map(function ($layoutDefinition, $index) {
             $layout = $layoutDefinition(new ViewDefinition())->toArray();
-            $id = 'predefined' . '_' . $index;
+            $id = 'predefined'.'_'.$index;
+
             return [
                 'id' => $id,
                 'columns' => $layout['columns'],
@@ -297,6 +318,7 @@ class DataGrid
 
     /**
      * @return array
+     *
      * @throws Exception
      * @throws Throwable
      */
@@ -340,25 +362,25 @@ class DataGrid
             'queries' => [],
         ];
 
-        if (!$this->pageWithSession) {
+        if (! $this->pageWithSession) {
             $this->page = $this->request->get('page', 1);
         } else {
             $this->page = session($this->ref)['page'] ?? 1;
         }
 
-        if (!$this->sortWithSession) {
+        if (! $this->sortWithSession) {
             $this->sortBy = $this->request->get('sortBy', []);
         } else {
             $this->sortBy = session($this->ref)['sortBy'] ?? [];
         }
 
-        if (!$this->searchWithSession) {
+        if (! $this->searchWithSession) {
             $this->search = $this->request->get('search', $defaultSearch);
         } else {
             $this->search = session($this->ref)['search'] ?? $defaultSearch;
         }
 
-        if (!$this->filterWithConfig) {
+        if (! $this->filterWithConfig) {
             $this->filters = session($this->ref)['filters'] ?? [];
         } else {
             $this->filters = $this->existingConfig['filters'] ?? [];
@@ -393,14 +415,14 @@ class DataGrid
     //can also be a custom layout created by the user
     private function applyLayout()
     {
-        if (isset($this->existingConfig['currentLayout']) && !!$this->existingConfig['currentLayout']) {
+        if (isset($this->existingConfig['currentLayout']) && (bool) $this->existingConfig['currentLayout']) {
             $layout = collect($this->layouts)->firstWhere('id', $this->existingConfig['currentLayout']);
-            if (!!$layout) {
+            if ((bool) $layout) {
                 $this->columns = collect($this->columns)->map(function ($column) use ($layout) {
                     $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
                     $found = collect($layout['columns'])->firstWhere('value', $value);
 
-                    if (!!$found) {
+                    if ((bool) $found) {
                         $column['hidden'] = false;
                         $column['index'] = $found['order'];
                     } else {
@@ -477,14 +499,14 @@ class DataGrid
     //selects specifically the item values
     private function selectValues(array $column)
     {
-        $this->query->addSelect(DB::raw($column['rawValue'] . ($column['isRaw'] ? ' AS ' . $column['value'] : '')));
+        $this->query->addSelect(DB::raw($column['rawValue'].($column['isRaw'] ? ' AS '.$column['value'] : '')));
 
-        if (isset($column['rawSubtitle']) && !!$column['rawSubtitle']) {
+        if (isset($column['rawSubtitle']) && (bool) $column['rawSubtitle']) {
             $this->query->addSelect(DB::raw($column['rawSubtitle']));
         }
 
-        if (isset($column['iconConditionRawValue']) && !!$column['iconConditionRawValue']) {
-            $this->query->addSelect(DB::raw($column['iconConditionRawValue'] . ' AS ' . $column['iconConditionValue']));
+        if (isset($column['iconConditionRawValue']) && (bool) $column['iconConditionRawValue']) {
+            $this->query->addSelect(DB::raw($column['iconConditionRawValue'].' AS '.$column['iconConditionValue']));
         }
     }
 
@@ -512,10 +534,10 @@ class DataGrid
     {
         $this->search['recommendations'] = [];
         foreach ($this->columns as $column) {
-            if (!$column['hidden'] && $column['searchable'] && !$column['isAdvanced'] && isset($this->search['term']) && !!$this->search['term']) {
+            if (! $column['hidden'] && $column['searchable'] && ! $column['isAdvanced'] && isset($this->search['term']) && (bool) $this->search['term']) {
                 $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
                 $this->search['recommendations'][] = [
-                    'text' => $column['label'] . ' contains <b>"' . $this->search['term'] . '"</b>',
+                    'text' => $column['label'].' contains <b>"'.$this->search['term'].'"</b>',
                     'value' => $value,
                     'type' => $column['type'],
                 ];
@@ -531,7 +553,7 @@ class DataGrid
             $index = 0;
             foreach ($this->search['queries'] as $key => $terms) {
                 $column = collect($this->columns)->firstWhere('rawValue', $key);
-                if (!$column) {
+                if (! $column) {
                     $column = collect($this->columns)->firstWhere('value', $key);
                 }
 
@@ -544,7 +566,7 @@ class DataGrid
                 if ($column) {
                     $this->query->where(function ($query) use ($column, $clause, $terms) {
                         foreach ($terms as $term) {
-                            $query->$clause($column['rawValue'] . ' LIKE "%' . strtolower($term) . '%"');
+                            $query->$clause($column['rawValue'].' LIKE "%'.strtolower($term).'%"');
                         }
                     });
                 }
@@ -552,7 +574,7 @@ class DataGrid
             }
         }
 
-        if (!$this->search['initial']) {
+        if (! $this->search['initial']) {
             $this->search['term'] = '';
             $this->search['recommendations'] = [];
         }
@@ -639,7 +661,7 @@ class DataGrid
     //generates avatar URLs based on previously selected avatar values
     private function generateAvatarUrl($item): ?string
     {
-        if (isset($item['file_key']) && !!$item['file_key']) {
+        if (isset($item['file_key']) && (bool) $item['file_key']) {
             return Storage::disk($item['file_disk'])
                 ->temporaryUrl($item['file_key'], Carbon::now()->addMinutes(config('filesystems.validity')));
         }
@@ -655,9 +677,9 @@ class DataGrid
     {
         foreach ($columns as $column) {
             if (isset($column['iconConditionValue']) && $column['iconConditionValue']) {
-                return [$column['iconConditionValue'] . '_icon' => $this->getIconFromCondition($item[$column['iconConditionValue']], $column['iconMap'])];
+                return [$column['iconConditionValue'].'_icon' => $this->getIconFromCondition($item[$column['iconConditionValue']], $column['iconMap'])];
             } else {
-                return [$column['value'] . '_icon' => $this->getIconFromCondition($item[$column['value']], $column['iconMap'])];
+                return [$column['value'].'_icon' => $this->getIconFromCondition($item[$column['value']], $column['iconMap'])];
             }
         }
 
@@ -671,11 +693,11 @@ class DataGrid
     private function getIconFromCondition(?string $value, array $icons): array
     {
         $index = collect($icons)->search(function ($icon) use ($value) {
-            return !$icon['default'] && $this->is($value, $icon['operator'], $icon['value']);
+            return ! $icon['default'] && $this->is($value, $icon['operator'], $icon['value']);
         });
 
         if ($index === false) {
-            $index = collect($icons)->search(function ($icon) use ($value) {
+            $index = collect($icons)->search(function ($icon) {
                 return $icon['default'];
             });
         }
@@ -712,7 +734,7 @@ class DataGrid
     private function validateLayoutDefinitions($definitions)
     {
         foreach ($definitions as $definition) {
-            throw_if(!$definition instanceof Closure, 'Layouts must be of type Closure. Use function(LayoutDefinition $layout) instead.');
+            throw_if(! $definition instanceof Closure, 'Layouts must be of type Closure. Use function(LayoutDefinition $layout) instead.');
         }
     }
 
@@ -731,11 +753,11 @@ class DataGrid
         $layoutColumns = collect($this->layouts)->pluck('columns')->flatten(1)->toArray();
         foreach ($layoutColumns as $layoutColumn) {
             $found = collect($this->columns)->firstWhere('value', $layoutColumn['value']) !== null;
-            if (!$found) {
+            if (! $found) {
                 $found = collect($this->columns)->firstWhere('rawValue', $layoutColumn['value']) !== null;
             }
 
-            throw_if(!$found, 'Layout with value "' . $layoutColumn['value'] . '" does not have a corresponding column. Please ensure each layout column has a specified table column.');
+            throw_if(! $found, 'Layout with value "'.$layoutColumn['value'].'" does not have a corresponding column. Please ensure each layout column has a specified table column.');
         }
     }
 }

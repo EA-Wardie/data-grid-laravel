@@ -2,7 +2,6 @@
 
 namespace Eawardie\DataGrid\Definitions;
 
-use Closure;
 use Exception;
 use Illuminate\Contracts\Support\Arrayable;
 use Throwable;
@@ -64,8 +63,8 @@ class IconDefinition implements Arrayable
     //validates all icon conditions
     private function validateCondition(array $map, $index)
     {
-        throw_if(!$map['icon'], 'Icon is required on condition index ' . $index);
-        throw_if(!$map['operator'], 'Operator is required on condition index ' . $index);
+        throw_if(! $map['icon'], 'Icon is required on condition index '.$index);
+        throw_if(! $map['operator'], 'Operator is required on condition index '.$index);
     }
 
     /**
@@ -84,11 +83,11 @@ class IconDefinition implements Arrayable
     private function validateOperators()
     {
         foreach ($this->iconMap as $iconMap) {
-            if (!!$iconMap['operator'] && !in_array($iconMap['operator'], self::AVAILABLE_OPERATORS)) {
+            if ((bool) $iconMap['operator'] && ! in_array($iconMap['operator'], self::AVAILABLE_OPERATORS)) {
                 if ($iconMap['operator'] === '<>') {
-                    throw new Exception('The ' . $iconMap['operator'] . " operator is not allowed. Did you mean '!='?");
+                    throw new Exception('The '.$iconMap['operator']." operator is not allowed. Did you mean '!='?");
                 } else {
-                    throw new Exception('The ' . $iconMap['operator'] . ' operator is not allowed. Allowed operators include [' . implode(', ', self::AVAILABLE_OPERATORS) . ']');
+                    throw new Exception('The '.$iconMap['operator'].' operator is not allowed. Allowed operators include ['.implode(', ', self::AVAILABLE_OPERATORS).']');
                 }
             }
         }

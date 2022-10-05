@@ -21,6 +21,7 @@ use Illuminate\Support\Collection;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User|null $owner
+ *
  * @method static Builder|DataGrid joinRelation($relationship_name, $join = '')
  * @method static Builder|DataGrid newModelQuery()
  * @method static Builder|DataGrid newQuery()
@@ -54,7 +55,7 @@ class DataGridModel extends Model
 
     public static function authHasConfiguration(string $tableRef): bool
     {
-        return !!self::getConfiguration($tableRef);
+        return (bool) self::getConfiguration($tableRef);
     }
 
     public static function getConfigurationData(string $tableRef): array
