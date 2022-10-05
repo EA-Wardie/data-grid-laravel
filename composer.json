@@ -16,21 +16,15 @@
         }
     ],
     "require": {
-        "php": "^7.4",
-        "spatie/laravel-package-tools": "^1.13.0",
-        "illuminate/contracts": "^9.0",
+        "php": ">=7.4",
+        "spatie/laravel-package-tools": "^1.12",
+        "ianrothmann/laravel-model-convention": "^0.9",
+        "illuminate/contracts": "^8.83",
+        "illuminate/support": "^8.83",
         "ext-json": "*"
     },
     "require-dev": {
-        "laravel/pint": "^1.0",
-        "nunomaduro/collision": "^6.0",
-        "nunomaduro/larastan": "^2.0.1",
-        "orchestra/testbench": "^7.0",
-        "pestphp/pest": "^1.21",
-        "pestphp/pest-plugin-laravel": "^1.1",
-        "phpstan/extension-installer": "^1.1",
-        "phpstan/phpstan-deprecation-rules": "^1.0",
-        "phpstan/phpstan-phpunit": "^1.0",
+        "orchestra/testbench": "^6.25",
         "phpunit/phpunit": "^9.5",
         "spatie/laravel-ray": "^1.26"
     },
@@ -42,19 +36,6 @@
     "autoload-dev": {
         "psr-4": {
             "Eawardie\\DataGrid\\Tests\\": "tests"
-        }
-    },
-    "scripts": {
-        "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
-    },
-    "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "phpstan/extension-installer": true
         }
     },
     "extra": {

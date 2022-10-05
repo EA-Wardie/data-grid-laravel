@@ -2,16 +2,17 @@
 
 namespace Eawardie\DataGrid;
 
+use Closure;
 use Eawardie\DataGrid\Definitions\ColumnDefinition;
 use Eawardie\DataGrid\Definitions\IconDefinition;
 use Eawardie\DataGrid\Definitions\ViewDefinition;
+use Eawardie\DataGrid\Models\DataGridModel;
 use Eawardie\DataGrid\Traits\DynamicCompare;
-use Closure;
-use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 

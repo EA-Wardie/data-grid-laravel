@@ -1,8 +1,9 @@
 <?php
 
-namespace Eawardie\DataGrid;
+namespace Eawardie\DataGrid\Models;
 
 use App\Models\User\User;
+use Eawardie\DataGrid\DataGrid;
 use Eloquent;
 use IanRothmann\Database\Eloquent\ModelConvention;
 use Illuminate\Database\Eloquent\Builder;
