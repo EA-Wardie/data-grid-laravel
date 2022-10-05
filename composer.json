@@ -1,12 +1,12 @@
 {
-    "name": "eawardie/data-grid",
+    "name": "eawardie/data-grid-laraval",
     "description": "Data table package used to build advanced tables with a matching front-end package. Allows for searching, filtering, paging & some other advanced features. ",
     "keywords": [
         "eawardie",
         "laravel",
         "data-grid"
     ],
-    "homepage": "https://github.com/eawardie/data-grid",
+    "homepage": "https://github.com/EA-Wardie/data-grid-laravel",
     "license": "MIT",
     "authors": [
         {
