@@ -17,8 +17,8 @@
     ],
     "require": {
         "php": ">=7.4",
-        "spatie/laravel-package-tools": "^1.12",
         "ianrothmann/laravel-model-convention": "^0.9",
+        "spatie/laravel-package-tools": "^1.9.2",
         "illuminate/contracts": "^8.83",
         "illuminate/support": "^8.83",
         "ext-json": "*"
@@ -31,11 +31,6 @@
     "autoload": {
         "psr-4": {
             "Eawardie\\DataGrid\\": "src"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Eawardie\\DataGrid\\Tests\\": "tests"
         }
     },
     "extra": {
