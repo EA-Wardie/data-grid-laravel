@@ -10,8 +10,14 @@ class DataGridServiceProvider extends PackageServiceProvider
     public function configurePackage(Package $package): void
     {
         $package->name('data-grid')
-            ->hasRoute('DataGridRoutes')
-            ->hasMigration('create_datagrid_table')
-            ->setBasePath(app_path());
+            ->hasRoute('web')
+            ->hasMigration('create_datagrid_table');
+    }
+
+    public function packageRegistered()
+    {
+        $this->app->bind('data-grid', function() {
+            return new DataGrid();
+        });
     }
 }

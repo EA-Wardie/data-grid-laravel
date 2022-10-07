@@ -6,8 +6,7 @@ use Closure;
 use Eawardie\DataGrid\Definitions\ColumnDefinition;
 use Eawardie\DataGrid\Definitions\IconDefinition;
 use Eawardie\DataGrid\Definitions\ViewDefinition;
-use Eawardie\DataGrid\Models\DataGridModel;
-//use Eawardie\DataGrid\Traits\DynamicCompare;
+use Eawardie\DataGrid\Traits\DynamicCompare;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -49,24 +48,18 @@ class DataGrid
     private const ADVANCED_COLUMN_TYPES = ['number', 'perc', 'timestamp', 'enum', 'icon'];
 
     //dynamic comparison trait used to determine icon per items
-//    use DynamicCompare;
+    use DynamicCompare;
 
     //inits data grid
-    public function __construct($ref)
+    public function __construct()
     {
-        $this->ref = $ref;
+        $this->ref = request()->path();
         $this->setRequest(collect(json_decode(base64_decode(request('q')), true)));
-    }
-
-    //creates an instance of the data grid
-    public static function forTable(string $ref): DataGrid
-    {
-        return new self($ref);
     }
 
     //sets the query to be used by the data grid
     //when query of type relation is used, use the getQuery() helper function on the original query
-    public function forQuery(Builder $query): DataGrid
+    public function forQuery(Builder $query): self
     {
         $this->setQuery($query);
         $this->handleConfig();
@@ -81,7 +74,7 @@ class DataGrid
     }
 
     //sets the query for the data grid
-    public function setQuery($query): DataGrid
+    public function setQuery($query): self
     {
         $this->query = $query;
 
@@ -95,7 +88,7 @@ class DataGrid
     }
 
     //sets the current request
-    public function setRequest($request = []): DataGrid
+    public function setRequest($request = []): self
     {
         $this->request = $request;
 
@@ -109,7 +102,7 @@ class DataGrid
     }
 
     //sets the current page
-    public function setPage(): DataGrid
+    public function setPage(): self
     {
         $this->page = $this->request->get('page', 1);
 
@@ -134,7 +127,7 @@ class DataGrid
     }
 
     //sets the current data grid columns
-    public function setColumns(array $columns): DataGrid
+    public function setColumns(array $columns): self
     {
         $this->columns = $columns;
 
@@ -142,7 +135,7 @@ class DataGrid
     }
 
     //switches the filter storage from config (default) to session
-    public function filterWithConfig(): DataGrid
+    public function filterWithConfig(): self
     {
         $this->filterWithConfig = true;
 
@@ -150,7 +143,7 @@ class DataGrid
     }
 
     //switches search storage from route parameters (default) to session
-    public function searchWithSession(): DataGrid
+    public function searchWithSession(): self
     {
         $this->searchWithSession = true;
 
@@ -158,7 +151,7 @@ class DataGrid
     }
 
     //switches sort storage from route parameters (default) to session
-    public function sortWithSession(): DataGrid
+    public function sortWithSession(): self
     {
         $this->sortWithSession = true;
 
@@ -166,7 +159,7 @@ class DataGrid
     }
 
     //switches page storage from route parameters (default) to session
-    public function pageWithSession(): DataGrid
+    public function pageWithSession(): self
     {
         $this->pageWithSession = true;
 
@@ -179,7 +172,7 @@ class DataGrid
     //function to add an advanced column
     //includes a list of helper functions to build a column from scratch
     //allows for fine grain column control
-    public function addAdvancedColumn(Closure $closure): DataGrid
+    public function addAdvancedColumn(Closure $closure): self
     {
         $column = $closure(new ColumnDefinition())->toArray();
         $index = count($this->columns);
@@ -195,7 +188,7 @@ class DataGrid
      */
     //function to add a simple column
     //has less functionality but generally less code to use
-    public function addColumn(string $value, string $label, string $type, bool $searchable = true, bool $sortable = true): DataGrid
+    public function addColumn(string $value, string $label, string $type, bool $searchable = true, bool $sortable = true): self
     {
         $index = count($this->columns);
         $basicValueArray = explode('.', $value);
@@ -225,7 +218,7 @@ class DataGrid
     //function to add an icon column
     //icon columns only contain icons
     //can also take the advanced IconDefinition class as a closure for fine grain icon condition control per item
-    public function addIconColumn(string $value, string $label, $icon, string $color = 'grey', bool $searchable = true, bool $sortable = true): DataGrid
+    public function addIconColumn(string $value, string $label, $icon, string $color = 'grey', bool $searchable = true, bool $sortable = true): self
     {
         $index = count($this->columns);
         $basicValueArray = explode('.', $value);
@@ -250,7 +243,7 @@ class DataGrid
         return $this;
     }
 
-    public function addFileColumn(string $value, string $label, string $icon = 'mdi-file', string $iconColor = 'grey'): DataGrid
+    public function addFileColumn(string $value, string $label, string $icon = 'mdi-file', string $iconColor = 'grey'): self
     {
         $index = count($this->columns);
         $this->column($value, $value, $label, 'file', $index);
@@ -263,7 +256,7 @@ class DataGrid
      */
     //function to add layouts to the data grid
     //layouts are added with LayoutDefinition class
-    public function views(...$layoutDefinitions): DataGrid
+    public function views(...$layoutDefinitions): self
     {
         $this->validateLayoutDefinitions($layoutDefinitions);
 
@@ -290,7 +283,7 @@ class DataGrid
 
     //switches whether to show hyperlinks for emails or not
     //email hyperlinks will automatically open the default email writer with a draft for that email address
-    public function hyperlinks(): DataGrid
+    public function hyperlinks(): self
     {
         $this->hyperlinks = true;
 
@@ -325,7 +318,7 @@ class DataGrid
     //configs are based on the data grid reference and current user auth ID
     private function handleConfig()
     {
-        if (DataGridModel::authHasConfiguration($this->ref)) {
+        if (Models\DataGrid::authHasConfiguration($this->ref)) {
             $this->existingConfig = $this->getConfiguration();
         } else {
             $this->existingConfig = $this->setConfiguration();
@@ -420,7 +413,7 @@ class DataGrid
     private function getConfiguration(): ?Collection
     {
         if ($this->ref) {
-            return collect(DataGridModel::getConfigurationData($this->ref));
+            return collect(Models\DataGrid::getConfigurationData($this->ref));
         }
 
         return null;
@@ -437,7 +430,7 @@ class DataGrid
                 'filters' => [],
             ];
 
-            return DataGridModel::setConfigurationData($this->ref, $data);
+            return Models\DataGrid::setConfigurationData($this->ref, $data);
         }
 
         return [];

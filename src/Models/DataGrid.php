@@ -3,7 +3,6 @@
 namespace Eawardie\DataGrid\Models;
 
 use App\Models\User\User;
-use Eawardie\DataGrid\DataGrid;
 use Eloquent;
 use IanRothmann\Database\Eloquent\ModelConvention;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,7 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * App\Models\DataGrid\DataGrid
+ * Eawardie\DataGrid\Models\DataGrid
  *
  * @property int $id
  * @property int|null $ownerid
@@ -35,7 +34,7 @@ use Illuminate\Support\Collection;
  * @method static Builder|DataGrid whereUrl($value)
  * @mixin Eloquent
  */
-class DataGridModel extends Model
+class DataGrid extends Model
 {
     use ModelConvention;
 
@@ -60,7 +59,7 @@ class DataGridModel extends Model
 
     public static function getConfigurationData(string $tableRef): array
     {
-        if (auth() && $tableRef) {
+        if (auth()->check()) {
             return collect(json_decode(self::getConfiguration($tableRef)->configuration, true))
                 ->toArray();
         }
@@ -91,7 +90,6 @@ class DataGridModel extends Model
 
     public static function updateConfigurationValue(string $tableRef, string $key, $value)
     {
-        /** @var DataGrid $config */
         $data = self::getConfigurationData($tableRef);
         $data[$key] = $value;
         self::setConfigurationData($tableRef, $data);

@@ -3,7 +3,7 @@
 namespace Eawardie\DataGrid\Controllers;
 
 use App\Http\Controllers\Controller;
-use Eawardie\DataGrid\Models\DataGridModel;
+use Eawardie\DataGrid\Models\DataGrid;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -19,7 +19,7 @@ class DataGridController extends Controller
         $session['filters'] = $filters;
         session()->put($ref, $session);
 
-        DataGridModel::updateConfigurationValue($ref, 'filters', $filters);
+        DataGrid::updateConfigurationValue($ref, 'filters', $filters);
 
         return redirect()->back();
     }
@@ -62,20 +62,20 @@ class DataGridController extends Controller
     public function layout($ref, Request $request): RedirectResponse
     {
         $layoutId = $request->get('layout');
-        DataGridModel::updateConfigurationValue($ref, 'currentLayout', $layoutId);
+        DataGrid::updateConfigurationValue($ref, 'currentLayout', $layoutId);
 
-        $config = DataGridModel::getConfigurationData($ref);
+        $config = DataGrid::getConfigurationData($ref);
         $layouts = $config['layouts'];
 
         if (count($layouts) > 0) {
             $layouts[0]['current'] = $layouts[0]['id'] === $layoutId;
-            DataGridModel::updateConfigurationValue($ref, 'layouts', $layouts);
+            DataGrid::updateConfigurationValue($ref, 'layouts', $layouts);
         }
 
         $session = session($ref);
         $session['filters'] = [];
         session()->put($ref, $session);
-        DataGridModel::updateConfigurationValue($ref, 'filters', []);
+        DataGrid::updateConfigurationValue($ref, 'filters', []);
 
         return redirect()->back();
     }
@@ -102,8 +102,8 @@ class DataGridController extends Controller
         ];
 
         if ($visibleColumns->count() > 0) {
-            DataGridModel::updateConfigurationValue($ref, 'currentLayout', $id);
-            DataGridModel::updateConfigurationValue($ref, 'layouts', [$layout]);
+            DataGrid::updateConfigurationValue($ref, 'currentLayout', $id);
+            DataGrid::updateConfigurationValue($ref, 'layouts', [$layout]);
         }
 
         return redirect()->back();

@@ -11,6 +11,6 @@ class DataGrid extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \Eawardie\DataGrid\DataGrid::class;
+        return 'data-grid';
     }
 }
