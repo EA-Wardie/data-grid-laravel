@@ -15,10 +15,10 @@ You can install the package via composer:
 composer require eawardie/data-grid-laravel
 ```
 
-Please also note that a companion front-end [package](https://github.com/EA-Wardie/data-grid-vue) is required to use this package to it's fullest:
+Please also note that a companion front-end [package](https://github.com/EA-Wardie/data-grid-vuetify) is required to use this package to it's fullest:
 
 ```bash
-npm install data-grid-vue --save
+npm install data-grid-vuetify
 ```
 
 ## Info
@@ -43,14 +43,6 @@ Some initial setup is required. Most notably running the included migration of t
 php artisan migrate
 ```
 
-#### Registering routes
-
-To register the included package routes, simply add the following line of code to your app's main route file:
-
-```php
-DataGridRoutes::get();
-```
-
 ### Creating a data grid
 
 Data grids or tables can be created by using DataGrid facade in any php class as required. The following is a simple example of a data grid.
@@ -58,21 +50,14 @@ An in-depth explanation follows:
 
 ```php
 $query = User::query();
-$data = DataGrid::forTable('cfd57041-f48f-3134-b55d-b06cc5e92d5b')
-    ->forQuery($query)
+$data = DataGrid::forQuery($query)
     ->addColumn('name', 'Name', 'text')
     ->get();
 ```
 
-The example above shows the simples from op setting up a data table. Data tables consist of mainly 3 aspects:
-- Unique table reference
+The example above shows the simples from op setting up a data table. Data tables consist of mainly 2 aspects:
 - Query used for the data itself
 - Various properties to build the data grid
-
-#### Table reference
-Starting out we are required to provide a unique reference to the table bing built. This can be any string or series of numbers.
-The most important part is simply that this reference is unique to all other data grids in your app.
-In this example we used a uuid generated string.
 
 #### Query
 After giving the data grid a reference we also have to pass a data query. 
@@ -183,6 +168,8 @@ An example is listed below:
 
 ### `addIconColumn()`
 The `addiconcolumn()`, as the name suggests, can be used to add a column to the data grid that only displays
+
+# TODO --
 
 ## Credits
 
