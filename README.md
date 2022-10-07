@@ -1,7 +1,7 @@
 # Data Grid Laravel
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/eawardie/data-grid.svg?style=flat-square)](https://packagist.org/packages/eawardie/data-grid)
-[![Total Downloads](https://img.shields.io/packagist/dt/eawardie/data-grid.svg?style=flat-square)](https://packagist.org/packages/eawardie/data-grid)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/eawardie/data-grid-laravel.svg?style=flat-square)](https://packagist.org/packages/eawardie/data-grid-laravel)
+[![Total Downloads](https://img.shields.io/packagist/dt/eawardie/data-grid-laravel.svg?style=flat-square)](https://packagist.org/packages/eawardie/data-grid-laravel)
 
 ### Data table package used to build advanced tables with a matching front-end package.
 
