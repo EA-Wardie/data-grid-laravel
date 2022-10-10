@@ -7,8 +7,10 @@ use Eloquent;
 use IanRothmann\Database\Eloquent\ModelConvention;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Eawardie\DataGrid\Models\DataGrid
@@ -40,7 +42,7 @@ class DataGrid extends Model
 
     protected $guarded = [];
 
-    public function owner(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'ownerid', 'userid');
     }
@@ -54,7 +56,7 @@ class DataGrid extends Model
 
     public static function authHasConfiguration(string $tableRef): bool
     {
-        return (bool) self::getConfiguration($tableRef);
+        return (bool)self::getConfiguration($tableRef);
     }
 
     public static function getConfigurationData(string $tableRef): array
@@ -76,13 +78,12 @@ class DataGrid extends Model
                 'configuration' => json_encode($data),
             ]);
         } else {
-            /** @var User $user */
-            $user = auth()->user();
-            $config = $user->dataDisplaySystems()
-                ->create([
-                    'table' => $tableRef,
-                    'configuration' => json_encode($data),
-                ]);
+            $userId = auth()->id();
+            $config = DB::table('datagrid')->insert([
+                'ownerid' => $userId,
+                'table' => $tableRef,
+                'configuration' => json_encode($data),
+            ]);
         }
 
         return collect(json_decode($config->configuration, true));
