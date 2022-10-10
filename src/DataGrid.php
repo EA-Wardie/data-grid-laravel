@@ -243,13 +243,13 @@ class DataGrid
         return $this;
     }
 
-    public function addFileColumn(string $value, string $label, string $icon = 'mdi-file', string $iconColor = 'grey'): self
-    {
-        $index = count($this->columns);
-        $this->column($value, $value, $label, 'file', $index);
-
-        return $this;
-    }
+//    public function addFileColumn(string $value, string $label, string $icon = 'mdi-file', string $iconColor = 'grey'): self
+//    {
+//        $index = count($this->columns);
+//        $this->column($value, $value, $label, 'file', $index);
+//
+//        return $this;
+//    }
 
     /**
      * @throws Throwable
