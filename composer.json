@@ -1,5 +1,5 @@
 {
-    "name": "eawardie/data-grid-laraval",
+    "name": "eawardie/data-grid-laravel",
     "description": "Data table package used to build advanced tables with a matching front-end package. Allows for searching, filtering, paging & some other advanced features. ",
     "keywords": [
         "eawardie",
