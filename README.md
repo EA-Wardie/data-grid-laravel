@@ -222,37 +222,37 @@ Multiple definitions exists to be used with the `DataGrid` facade. All current a
 The `ColumnDefintion` class is used to define advanced columns for your data grid.
 The `ColumnDefinition` instance can take the following property functions:
 
-#### `->avatar(identifier, preview)`
+#### `avatar(identifier, preview)`
 The `avatar()` function is used to add an avatar to your advanced column.
 It takes a file identifier for e.g. `fileid` as well as a boolean for avatar preview.
 If your query contains joins the identifier should be prefixed with the DB column name.
 The preview option simply enables users preview the avatar in a larger image on the front-end by clicking on it.
 
-#### `->icon()`
+#### `icon()`
 The `icon()` function is used to pass an icon to your advanced column. 
 This function works exactly the same as the `addIconColumn()` we covered earlier.
 
-#### `->value()`
+#### `value()`
 The `value()` function is used to pass the DB column value used to display the actual value of the column.
 This function is similar to the `value` parameter on the `addColumn()` function.
 It should also be noted that when using raw statements the `value()` function is used for that statement's alias.
 
-#### `->rawValue()`
+#### `rawValue()`
 The `rawValue()` function is used when you want to pass raw SQL/MySQL statements if advanced data retrieval is required.
 It is important to note that when using `rawValue()` function it is required to also use the `value()` function to pass an alias to that raw statement.
 Thus, you **DO NOT** add an `AS` section to your raw statement.
 
-#### `->subtitle()`
+#### `subtitle()`
 The `subtitle()` function is used to add a subtitle value to your column.
 The value parameter is the DB column identifier for the value you would like to display.
 This value is also used as an alias when using raw statements.
 
-#### `->rawSubtitle()`
+#### `rawSubtitle()`
 The `rawSubtitle()` function is used to pass raw SQL/MySQL statements for subtitles.
 It is important to note that when using `rawSubtitle()` function it is required to also use the `subtitle()` function to pass an alias to that raw statement.
 Thus, you **DO NOT** add an `AS` section to your raw statement.
 
-#### `->type()`
+#### `type()`
 The `type()` function is used to specify the column type of the column itself.
 Different column types apply different styles, search parameters and filters to that column.
 Available types are:
@@ -264,32 +264,32 @@ Available types are:
 - `enum` - Formats value as an enum - `uses filters`
 - `icon` - Adds an icon to column - `uses filters`
 
-#### `->subtitleType()`
+#### `subtitleType()`
 The `subtitleType()` function is used to specify the main column subtitle type.
 Subtitle types are only used to apply formatting on the front-end.
 **Later installments will add searching and filters for subtitles.**
 
-#### `->label()`
+#### `label()`
 The `label()` function is used to add a label for the column.
 Label is displayed on the front-end.
 
-#### `->enumerators()`
+#### `enumerators()`
 The `enumerators()` function is used to add enum `key -> value` pairs for available enum values for that column.
 This function is only used when the column `type` is `enum`.
 Columns of type `enum` auto-detect enum values when used. 
 This function can however override these values if they render incorrectly.
 
-#### `->hidden()`
+#### `hidden()`
 The `hidden()` function is used to mark that column as hidden.
 Hidden columns do not render on the front-end. 
 This function is not recommended as the hidden property is usually set through the `views()` function.
 If a column should be hidden by default it's better to just not include that column.
 
-#### `->searchable()`
+#### `searchable()`
 The `searchable()` function is used to indicate whether the column can be searched.
 When applying this option to a column of a searchable type that value will be added to search recommendations.
 
-#### `->timestampFormat()`
+#### `timestampFormat()`
 The `timestampFormat()` column can be used to override the data grid's default timestamp format.
 This function is only recommended when the column is of type `timestamp`.
 An example is: `D MMM YYYY`.
@@ -299,7 +299,7 @@ The `IconDefinition` class is used to define advanced icons for columns.
 This class can be used with the `addIconColumn()` or the `addAdvancedColumn()` functions.
 The `IconDefinition` instance can take the following properties:
 
-#### `->condition()`
+#### `condition()`
 The `condition()` function is used to add conditions for specific icons on a column.
 The function takes 5 possible parameters:
 - `icon` - Icon to be displayed if condition evaluates to true
@@ -308,7 +308,7 @@ The function takes 5 possible parameters:
 - `color` - The color of the icon to be used
 - `tooltip` - If set the icon will display a tooltip on hover
 
-#### `->defualt()`
+#### `defualt()`
 The `defualt()` function is used to specify a default icon to display if none of the conditions evaluate to `true`.
 Also takes a color as a second parameter. this defaults to `grey`.
 
