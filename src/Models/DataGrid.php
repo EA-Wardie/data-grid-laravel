@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Eawardie\DataGrid\Models\DataGrid
@@ -78,9 +77,8 @@ class DataGrid extends Model
                 'configuration' => json_encode($data),
             ]);
         } else {
-            $userId = auth()->id();
-            $config = DB::table('datagrid')->insert([
-                'ownerid' => $userId,
+            $config = self::create([
+                'ownerid' => auth()->id(),
                 'table' => $tableRef,
                 'configuration' => json_encode($data),
             ]);
