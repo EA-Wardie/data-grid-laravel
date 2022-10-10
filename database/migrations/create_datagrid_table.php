@@ -14,7 +14,7 @@ class CreateDataGrid extends Migration
     public function up()
     {
         Schema::create('datagrid', function (Blueprint $table) {
-            $table->increments('id');
+            $table->increments('datagridid');
             $table->unsignedInteger('ownerid')->nullable();
             $table->string('table')->nullable();
             $table->json('configuration')->nullable();
