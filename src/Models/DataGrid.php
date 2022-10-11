@@ -41,11 +41,6 @@ class DataGrid extends Model
 
     protected $guarded = [];
 
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'ownerid', 'userid');
-    }
-
     public static function getConfiguration(string $tableRef)
     {
         return self::where('ownerid', auth()->id())

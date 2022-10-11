@@ -3,7 +3,7 @@
 use Eawardie\DataGrid\Controllers\DataGridController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => '/datagrid', 'as' => 'datagrid.'], function () {
+Route::group(['prefix' => '/datagrid', 'as' => 'datagrid.', 'middleware' => ['web', 'auth']], function () {
     Route::post('/{ref}/layout', [DataGridController::class, 'layout'])
         ->name('layout');
     Route::post('/{ref}/view', [DataGridController::class, 'view'])

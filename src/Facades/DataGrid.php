@@ -3,32 +3,33 @@
 namespace Eawardie\DataGrid\Facades;
 
 use Closure;
+use Eawardie\DataGrid\DataGridService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method \Eawardie\DataGrid\DataGrid forQuery(Builder $query)
- * @method \Eawardie\DataGrid\DataGrid getQuery()
- * @method \Eawardie\DataGrid\DataGrid setQuery(Builder $query)
- * @method \Eawardie\DataGrid\DataGrid getRequest()
- * @method \Eawardie\DataGrid\DataGrid setRequest(array $request)
- * @method \Eawardie\DataGrid\DataGrid getPage()
- * @method \Eawardie\DataGrid\DataGrid setPage(int $page)
- * @method \Eawardie\DataGrid\DataGrid getReference()
- * @method \Eawardie\DataGrid\DataGrid getColumns()
- * @method \Eawardie\DataGrid\DataGrid setColumns(array $columns)
- * @method \Eawardie\DataGrid\DataGrid filterWithConfig()
- * @method \Eawardie\DataGrid\DataGrid searchWithSession()
- * @method \Eawardie\DataGrid\DataGrid sortWithSession()
- * @method \Eawardie\DataGrid\DataGrid pageWithSession()
- * @method \Eawardie\DataGrid\DataGrid addAdvancedColumn(Closure $closure)
- * @method \Eawardie\DataGrid\DataGrid addColumn(string $value, string $label, string $type, bool $searchable, bool $sortable)
- * @method \Eawardie\DataGrid\DataGrid addIconColumn(string $value, string $label, $icon, string $color, bool $searchable, bool $sortable)
- * @method \Eawardie\DataGrid\DataGrid views($layoutDefinitions)
- * @method \Eawardie\DataGrid\DataGrid hyperlinks()
- * @method \Eawardie\DataGrid\DataGrid get()
+ * @method DataGridService forQuery(Builder $query)
+ * @method DataGridService getQuery()
+ * @method DataGridService setQuery(Builder $query)
+ * @method DataGridService getRequest()
+ * @method DataGridService setRequest(array $request)
+ * @method DataGridService getPage()
+ * @method DataGridService setPage(int $page)
+ * @method DataGridService getReference()
+ * @method DataGridService getColumns()
+ * @method DataGridService setColumns(array $columns)
+ * @method DataGridService filterWithConfig()
+ * @method DataGridService searchWithSession()
+ * @method DataGridService sortWithSession()
+ * @method DataGridService pageWithSession()
+ * @method DataGridService addAdvancedColumn(Closure $closure)
+ * @method DataGridService addColumn(string $value, string $label, string $type, bool $searchable, bool $sortable)
+ * @method DataGridService addIconColumn(string $value, string $label, $icon, string $color, bool $searchable, bool $sortable)
+ * @method DataGridService views($layoutDefinitions)
+ * @method DataGridService hyperlinks()
+ * @method DataGridService get()
  *
- * @see \Eawardie\DataGrid\DataGrid
+ * @see \Eawardie\DataGrid\DataGridService
  */
 class DataGrid extends Facade
 {

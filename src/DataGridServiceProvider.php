@@ -17,7 +17,7 @@ class DataGridServiceProvider extends PackageServiceProvider
     public function packageRegistered()
     {
         $this->app->bind('data-grid', function() {
-            return new DataGrid();
+            return new DataGridService();
         });
     }
 }

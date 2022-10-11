@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
-class DataGrid
+class DataGridService
 {
     //all data grid properties
     private Builder $query;
@@ -43,6 +43,9 @@ class DataGrid
     private bool $sortWithSession = false;
     private bool $pageWithSession = false;
     private bool $hyperlinks = false;
+    private ?Closure $rowMapClosure = null;
+    private array $additionalSelects = [];
+    private array $loadRelationships = [];
 
     //indicates column types that are accepted as advanced
     private const ADVANCED_COLUMN_TYPES = ['number', 'perc', 'timestamp', 'enum', 'icon'];
@@ -290,6 +293,34 @@ class DataGrid
         return $this;
     }
 
+    //function used to add extra selects to final items array
+    public function addSelect(string $select): self
+    {
+        $this->additionalSelects[] = $select;
+
+        return $this;
+    }
+
+    //function used t get access to every item on the current page
+    //can be used to mutate existing rows
+    public function mapRow(Closure $closure): self
+    {
+        $this->rowMapClosure = $closure;
+
+        return $this;
+    }
+
+    public function load(...$relationships): self
+    {
+        if (is_array($relationships[0])) {
+            $this->loadRelationships = $relationships[0];
+        } else {
+            $this->loadRelationships = $relationships;
+        }
+
+        return $this;
+    }
+
     /**
      * @return array
      *
@@ -468,6 +499,12 @@ class DataGrid
             $this->selectValues($column);
             $this->selectAvatar($column);
         });
+
+        if (count($this->additionalSelects) > 0) {
+            foreach ($this->additionalSelects as $select) {
+                $this->query->addSelect(DB::raw($select));
+            }
+        }
     }
 
     //selects specifically the item values
@@ -596,7 +633,11 @@ class DataGrid
     //handles basic item values, avatars and icon states
     private function setItems()
     {
-        $items = $this->query->get()->toArray();
+        $data = $this->query->get();
+        if(count($this->loadRelationships) > 0) {
+            $data->load($this->loadRelationships);
+        }
+        $items = $data->toArray();
         $enumColumns = collect($this->columns)->where('type', '=', 'enum')->toArray();
         $avatarColumns = collect($this->columns)->where('avatar', '!=', null)->toArray();
         $iconColumns = collect($this->columns)->where('type', 'icon')->toArray();
@@ -624,6 +665,10 @@ class DataGrid
                 foreach ($enumColumns as $enumColumn) {
                     $item[$enumColumn['value']] = $enumColumn['enumerators'][$item[$enumColumn['value']]];
                 }
+            }
+
+            if ($this->rowMapClosure) {
+                $item = call_user_func($this->rowMapClosure, $item);
             }
 
             $modifiedItems[] = $item;

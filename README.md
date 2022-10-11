@@ -35,7 +35,7 @@ Package usage can be split up into multiple sections. All will be discussed belo
 
 ### Initial setup
 
-Some initial setup is required. Most notably running the included migration of this package. As well as registering the routes included in this package.
+Some initial setup is required. Most notably running the included migration of this package.
 
 #### Migration
 
@@ -60,11 +60,11 @@ The example above shows the simplest form op setting up a data grid. Data grids 
 - Various properties to build the data grid
 
 #### Query
-After giving the data grid a reference we also have to pass a data query. 
 This query will be used to gather and display any data that is actually required in the data grid.
 The query can be any laravel based query using Models, the DB facade or relationships.
 It is however important to note that the expected type is `Illuminate\Database\Eloquent\Builder`.
 This is prevalent in the example when using the `query()` helper on the `User` model.
+Also note that any relationship access should be handled with `join()` and `leftJoin()` manually.
 
 #### Properties
 Lastly we look at data grid properties. The `DataGrid` facade make a large amount of properties available to the developer for use.
@@ -210,6 +210,32 @@ $data = DataGrid::forQuery($query)
 
 ### `hyperlinks()`
 The `hyperlinks()` function sets whether email addresses are indicated as links on the front-end.
+
+### `load()`
+The `load()` function can be used to load model relationships dynamically as required.
+`load()` take either comma seperated parameters for each relationship or an `array` of relationship names.
+Loaded data will be appended to row items.
+
+### `addSelect()`
+The `addSelect()` function, as its name suggests, simply adds a select to the final data gris item list.
+This is primary used id extra data is required but not automatically select via added columns.
+
+### `mapRow()`
+The `mapRow()` function is used to mutate the current pages row items.
+This function takes a callback function which receives each row item on the current page.
+It should be noted that any mutations made here are evaluated for every page item (**50** by default), and thus more complicated mutations can drastically decrease performance.
+The below example adds a `has_mobile` property to the final items list:
+```php
+$query = User::query();
+$data = DataGrid::forQuery($query)
+   ->addSelect('mobile')
+   ->addColumn('name', 'Name', 'text')
+   ->mapRow(function ($row) {
+      return collect($row)
+         ->put('has_mobile', !!$row['mobile'])
+         ->toArray();
+})
+```
 
 ### `get()`
 The `get()` function is used to return final `DataGrid` data array. If passing data to the front-end this function is required.
