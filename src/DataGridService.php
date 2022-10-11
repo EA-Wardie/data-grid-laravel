@@ -71,7 +71,7 @@ class DataGridService
     }
 
     //returns the query of the data grid
-    protected function getQuery(): Builder
+    public function getQuery(): Builder
     {
         return $this->query;
     }
