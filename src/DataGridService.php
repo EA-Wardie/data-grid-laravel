@@ -71,7 +71,7 @@ class DataGridService
     }
 
     //returns the query of the data grid
-    public function getQuery(): Builder
+    protected function getQuery(): Builder
     {
         return $this->query;
     }
@@ -422,21 +422,23 @@ class DataGridService
     {
         if (isset($this->existingConfig['currentLayout']) && (bool)$this->existingConfig['currentLayout']) {
             $layout = collect($this->layouts)->firstWhere('id', $this->existingConfig['currentLayout']);
-            if ((bool)$layout) {
-                $this->columns = collect($this->columns)->map(function ($column) use ($layout) {
-                    $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
-                    $found = collect($layout['columns'])->firstWhere('value', $value);
-
-                    if ((bool)$found) {
-                        $column['hidden'] = false;
-                        $column['index'] = $found['order'];
-                    } else {
-                        $column['hidden'] = true;
-                    }
-
-                    return $column;
-                })->toArray();
+            if (!$layout) {
+                $layout = collect($this->existingConfig['layouts'])->firstWhere('id', $this->existingConfig['currentLayout']);
             }
+
+            $this->columns = collect($this->columns)->map(function ($column) use ($layout) {
+                $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
+                $found = collect($layout['columns'])->firstWhere('value', $value);
+
+                if ((bool)$found) {
+                    $column['hidden'] = false;
+                    $column['index'] = $found['order'];
+                } else {
+                    $column['hidden'] = true;
+                }
+
+                return $column;
+            })->toArray();
         }
     }
 
@@ -634,7 +636,7 @@ class DataGridService
     private function setItems()
     {
         $data = $this->query->get();
-        if(count($this->loadRelationships) > 0) {
+        if (count($this->loadRelationships) > 0) {
             $data->load($this->loadRelationships);
         }
         $items = $data->toArray();
