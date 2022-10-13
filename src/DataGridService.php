@@ -46,6 +46,7 @@ class DataGridService
     private ?Closure $rowMapClosure = null;
     private array $additionalSelects = [];
     private array $loadRelationships = [];
+    private array $additionalRawSelects = [];
 
     //indicates column types that are accepted as advanced
     private const ADVANCED_COLUMN_TYPES = ['number', 'perc', 'timestamp', 'enum', 'icon'];
@@ -191,7 +192,7 @@ class DataGridService
      */
     //function to add a simple column
     //has less functionality but generally less code to use
-    public function addColumn(string $value, string $label, string $type, bool $searchable = true, bool $sortable = true): self
+    public function addColumn(string $value, string $label, string $type, bool $searchable = true, bool $sortable = true, bool $hidden = false): self
     {
         $index = count($this->columns);
         $basicValueArray = explode('.', $value);
@@ -210,7 +211,7 @@ class DataGridService
                 ->toArray();
         }
 
-        $this->column($basicValue, $value, $label, $type, $index, $searchable, $sortable, [], $enumerators);
+        $this->column($basicValue, $value, $label, $type, $index, $searchable, $sortable, [], $enumerators, $hidden);
 
         return $this;
     }
@@ -221,7 +222,7 @@ class DataGridService
     //function to add an icon column
     //icon columns only contain icons
     //can also take the advanced IconDefinition class as a closure for fine grain icon condition control per item
-    public function addIconColumn(string $value, string $label, $icon, string $color = 'grey', bool $searchable = true, bool $sortable = true): self
+    public function addIconColumn(string $value, string $label, $icon, string $color = 'grey', bool $searchable = true, bool $sortable = true, bool $hidden = false): self
     {
         $index = count($this->columns);
         $basicValueArray = explode('.', $value);
@@ -241,7 +242,16 @@ class DataGridService
             $iconMap = $icon(new IconDefinition())->toArray();
         }
 
-        $this->column($basicValue, $value, $label, 'icon', $index, $searchable, $sortable, $iconMap);
+        $this->column($basicValue, $value, $label, 'icon', $index, $searchable, $sortable, $iconMap, [], $hidden);
+
+        return $this;
+    }
+
+    public function addCustomColumn(string $identifier, string $label, bool $hidden = false): self
+    {
+        $index = count($this->columns);
+
+        $this->column($identifier, $identifier, $label, 'custom', $index, false, false, [], [], $hidden);
 
         return $this;
     }
@@ -301,9 +311,17 @@ class DataGridService
         return $this;
     }
 
+    //function used to add extra selects to final items array
+    public function addRawSelect(string $rawSelect): self
+    {
+        $this->additionalRawSelects[] = $rawSelect;
+
+        return $this;
+    }
+
     //function used t get access to every item on the current page
     //can be used to mutate existing rows
-    public function mapRow(Closure $closure): self
+    public function map(Closure $closure): self
     {
         $this->rowMapClosure = $closure;
 
@@ -498,13 +516,21 @@ class DataGridService
     private function applySelects()
     {
         collect($this->columns)->each(function ($column) {
-            $this->selectValues($column);
-            $this->selectAvatar($column);
+            if($column['type'] !== 'custom') {
+                $this->selectValues($column);
+                $this->selectAvatar($column);
+            }
         });
 
         if (count($this->additionalSelects) > 0) {
             foreach ($this->additionalSelects as $select) {
                 $this->query->addSelect(DB::raw($select));
+            }
+        }
+
+        if (count($this->additionalSelects) > 0) {
+            foreach ($this->additionalRawSelects as $rawSelect) {
+                $this->query->addSelect(DB::raw($rawSelect));
             }
         }
     }
@@ -554,6 +580,14 @@ class DataGridService
                     'value' => $value,
                     'type' => $column['type'],
                 ];
+
+                if ((isset($column['subtitle']) && !!$column['subtitle']) || (isset($column['rawSubtitle']) && !!$column['rawSubtitle'])) {
+                    $this->search['recommendations'][] = [
+                        'text' => $column['label'] . ' subtitle contains <b>"' . $this->search['term'] . '"</b>',
+                        'value' => $column['rawSubtitle'] ?? $column['subtitle'],
+                        'type' => $column['subtitleType'],
+                    ];
+                }
             }
         }
     }
@@ -568,6 +602,12 @@ class DataGridService
                 $column = collect($this->columns)->firstWhere('rawValue', $key);
                 if (!$column) {
                     $column = collect($this->columns)->firstWhere('value', $key);
+                }
+                if (!$column) {
+                    $column = collect($this->columns)->firstWhere('subtitle', $key);
+                }
+                if (!$column) {
+                    $column = collect($this->columns)->firstWhere('rawSubtitle', $key);
                 }
 
                 if ($index === 0) {
@@ -727,7 +767,7 @@ class DataGridService
     }
 
     //add one column to the total columns of the data grid
-    private function column(string $value, string $rawValue, string $label, string $type, int $index = 0, bool $searchable = false, bool $sortable = false, array $iconMap = [], array $enumerators = [])
+    private function column(string $value, string $rawValue, string $label, string $type, int $index = 0, bool $searchable = false, bool $sortable = false, array $iconMap = [], array $enumerators = [], bool $hidden = false)
     {
         $this->columns[] = [
             'value' => $value,
@@ -736,7 +776,7 @@ class DataGridService
             'type' => $type,
             'index' => $index,
             'originalIndex' => $index,
-            'hidden' => false,
+            'hidden' => $hidden,
             'searchable' => $searchable,
             'sortable' => $sortable,
             'isAggregate' => false,

@@ -51,6 +51,9 @@ class ColumnDefinition implements Arrayable
     //all column types
     private const COLUMN_TYPES = ['text', 'email', 'number', 'perc', 'timestamp', 'enum', 'icon'];
 
+    //all subtitle column types
+    private const SUBTITLE_COLUMN_TYPES = ['text', 'email'];
+
     //all column types that are accepted as advanced
     private const ADVANCED_COLUMN_TYPES = ['number', 'perc', 'timestamp', 'enum', 'icon'];
 
@@ -105,7 +108,7 @@ class ColumnDefinition implements Arrayable
             $this->value = $value;
         }
 
-        if (! $this->rawValue) {
+        if (!$this->rawValue) {
             $this->rawValue = $value;
         }
 
@@ -143,7 +146,7 @@ class ColumnDefinition implements Arrayable
             $this->subtitle = $subtitle;
         }
 
-        if (! $this->rawSubtitle) {
+        if (!$this->rawSubtitle) {
             $this->rawSubtitle = $subtitle;
         }
 
@@ -303,7 +306,7 @@ class ColumnDefinition implements Arrayable
     //validates the column's raw value
     private function validateRawValue()
     {
-        throw_if(! $this->value, new Exception('Value alias is required when using rawValue(), add it using value().'));
+        throw_if(!$this->value, new Exception('Value alias is required when using rawValue(), add it using value().'));
         throw_if(str_contains(strtolower($this->rawValue), ' as '), new Exception("Raw value cannot contain identifiers like 'AS'. Pass an alias with value()."));
     }
 
@@ -324,7 +327,7 @@ class ColumnDefinition implements Arrayable
     //very similar to validating the column raw value
     private function validateRawSubtitle()
     {
-        throw_if(! $this->subtitle, new Exception('Subtitle alias is required when using rawSubtitle(), add it using subtitle().'));
+        throw_if(!$this->subtitle, new Exception('Subtitle alias is required when using rawSubtitle(), add it using subtitle().'));
         throw_if(str_contains(strtolower($this->rawSubtitle), ' as '), new Exception("Raw subtitle cannot contain identifiers like 'AS'. Pass an alias with subtitle()."));
     }
 
@@ -335,8 +338,9 @@ class ColumnDefinition implements Arrayable
     //ensures specified column type is an allowed type
     private function validateType()
     {
-        throw_if($this->type === 'timestamp', "Timestamp is an invalid column type. Did you mean 'datetime'?");
-        throw_if(! in_array($this->type, self::COLUMN_TYPES), new Exception("Column type '".$this->type."' is not an allowed column type."));
+        $wrongTimestamp = $this->type === 'time' || $this->type === 'date' || $this->type === 'datetime';
+        throw_if($wrongTimestamp, $this->type . " is an invalid column type. Did you mean 'timestamp'?");
+        throw_if(!in_array($this->type, self::COLUMN_TYPES), new Exception("Column type '" . $this->type . "' is not an allowed column type."));
     }
 
     /**
@@ -346,7 +350,7 @@ class ColumnDefinition implements Arrayable
     //ensures specified column type is an allowed type
     private function validateLabel()
     {
-        throw_if(! $this->label, 'A label is required for column "'.$this->value.'".');
+        throw_if(!$this->label, 'A label is required for column "' . $this->value . '".');
     }
 
     /**
@@ -357,8 +361,8 @@ class ColumnDefinition implements Arrayable
     private function validateSubtitleType()
     {
         $wrongTimestamp = $this->subtitleType === 'time' || $this->subtitleType === 'date' || $this->subtitleType === 'datetime';
-        throw_if($wrongTimestamp, $this->subtitleType." is an invalid column type. Did you mean 'timestamp'?");
-        throw_if(! in_array($this->subtitleType, self::COLUMN_TYPES), new Exception("Subtitle column type '".$this->subtitleType."' is not an allowed column type."));
+        throw_if($wrongTimestamp, $this->subtitleType . " is an invalid column type. Did you mean 'timestamp'?");
+        throw_if(!in_array($this->subtitleType, self::SUBTITLE_COLUMN_TYPES), new Exception("Subtitle column type '" . $this->subtitleType . "' is not an allowed column type. Allowed types are [" . implode(', ', self::SUBTITLE_COLUMN_TYPES) . "]"));
     }
 
     /**

@@ -37,9 +37,11 @@ Package usage can be split up into multiple sections. All will be discussed belo
 
 Some initial setup is required. Most notably running the included migration of this package.
 
-#### Migration
+#### Migrations
+You can publish and run the migrations with:
 
 ```bash
+php artisan vendor:publish --tag="data-grid-laravel-migrations"
 php artisan migrate
 ```
 
@@ -135,7 +137,7 @@ The `addColumn()` function is used to add a column to the data grid.
 This function takes a few parameters to set up the column correctly.
 These are covered below:
 
-#### `addColumn(value, label, type, searchable, sortable)`
+#### `addColumn(value, label, type, searchable, sortable, hidden)`
 The `value` parameter indicates the DB column value. 
 Important note, when using joins in your query. 
 Values must be prefixes with table names.
@@ -150,6 +152,13 @@ these will be listed and explained at a later stage.
 The `searchable` parameter indicates whether to make this column available for searching.
 
 The `sortable` parameter indicates whether to make this column available for sorting.
+
+The `hidden` parameter is used to indicate if the column is hidden by default.
+
+### `addCustomColumn()`
+The `addCustomColumn()` function is used to add a non-searchable and non-sortable column to your data-grid that doesn't match a valid select statement.
+This function is intended for custom column that are mutated on the front-end using `slots`.
+The function takes a `identifier` parameter for the slot alias and a `label` parameter for the column label.
 
 ### `addAdvancedColumn()`
 The `addAdvancedColumn()` function is also used to add a column to the data grid.
@@ -171,7 +180,7 @@ An example is listed below:
 The `addIconColumn()`, as the name suggests, can be used to add a column to the data grid that only displays an icon.
 This function also take a series of parameters. These are covered below:
 
-`addIconColumn(value, label, icon, color, searchable, sortable)`
+`addIconColumn(value, label, icon, color, searchable, sortable, hidden)`
 
 The `value` parameter indicates the DB column value.
 Important note, when using joins in your query.
@@ -219,6 +228,9 @@ Loaded data will be appended to row items.
 ### `addSelect()`
 The `addSelect()` function, as its name suggests, simply adds a select to the final data gris item list.
 This is primary used id extra data is required but not automatically select via added columns.
+
+### `addRawSelect()`
+Same principle as `addSelect()` but with raw statements.
 
 ### `mapRow()`
 The `mapRow()` function is used to mutate the current pages row items.
@@ -339,7 +351,7 @@ The `defualt()` function is used to specify a default icon to display if none of
 Also takes a color as a second parameter. this defaults to `grey`.
 
 **Other available definitions are `EnumDefinition` and `FileDefinition`.
-these are however still under construction and planned for later release.**
+these are however still under construction and planned for later a release.**
 
 ## Conclusion
 This then concludes the documentation for data-grid-laravel. For question please contact [EA-wardie](https://github.com/EA-wardie).
