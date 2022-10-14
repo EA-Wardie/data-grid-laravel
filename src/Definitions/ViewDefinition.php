@@ -10,7 +10,7 @@ class ViewDefinition implements Arrayable
 {
     //all view properties
     private array $columns = [];
-
+    private array $sortBy = [];
     private string $label = '';
 
     public function __construct()
@@ -19,13 +19,21 @@ class ViewDefinition implements Arrayable
 
     //function to specify a view column
     //column must exist in dat grid
-    public function column(string $value, int $order = 0): ViewDefinition
+    public function column(string $value, int $order = 0, bool $hidden = false): self
     {
         $this->columns[] = [
             'value' => $value,
             'order' => $order,
-            'hidden' => true,
+            'hidden' => $hidden,
         ];
+
+        return $this;
+    }
+
+    //function used to pass a key -> value pair for column sorting
+    public function sort(array $sortBy = []): self
+    {
+        $this->sortBy = $sortBy;
 
         return $this;
     }
@@ -34,7 +42,7 @@ class ViewDefinition implements Arrayable
      * @throws Exception
      */
     //function to specify view label
-    public function label(string $label): ViewDefinition
+    public function label(string $label): self
     {
         $this->label = $label;
 
@@ -52,6 +60,7 @@ class ViewDefinition implements Arrayable
 
         return [
             'columns' => $this->columns,
+            'sort' => $this->sortBy,
             'label' => $this->label,
         ];
     }
@@ -74,6 +83,6 @@ class ViewDefinition implements Arrayable
     //validates view label
     private function validateLabel()
     {
-        throw_if(! $this->label, 'A view label is required. Use label() to add one.');
+        throw_if(!$this->label, 'A view label is required. Use label() to add one.');
     }
 }

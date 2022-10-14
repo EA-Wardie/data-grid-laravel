@@ -280,8 +280,10 @@ class DataGridService
             return [
                 'id' => $id,
                 'columns' => $layout['columns'],
+                'sort' => $layout['sort'],
                 'label' => $layout['label'],
                 'current' => $this->existingConfig['currentLayout'] === $id,
+                'custom' => false,
             ];
         })->toArray();
 
@@ -449,8 +451,12 @@ class DataGridService
                 $found = collect($layout['columns'])->firstWhere('value', $value);
 
                 if ((bool)$found) {
-                    $column['hidden'] = false;
+                    $column['hidden'] = $found['hidden'];
                     $column['index'] = $found['order'];
+
+                    if (isset($found['sort'])) {
+                        $this->sortBy = $found['sort'];
+                    }
                 } else {
                     $column['hidden'] = true;
                 }
@@ -516,7 +522,7 @@ class DataGridService
     private function applySelects()
     {
         collect($this->columns)->each(function ($column) {
-            if($column['type'] !== 'custom') {
+            if ($column['type'] !== 'custom') {
                 $this->selectValues($column);
                 $this->selectAvatar($column);
             }

@@ -62,13 +62,20 @@ class DataGridController extends Controller
     public function layout($ref, Request $request): RedirectResponse
     {
         $layoutId = $request->get('layout');
+        $sortBy = $request->get('sort', []);
         DataGrid::updateConfigurationValue($ref, 'currentLayout', $layoutId);
 
         $config = DataGrid::getConfigurationData($ref);
         $layouts = $config['layouts'];
 
         if (count($layouts) > 0) {
-            $layouts[0]['current'] = $layouts[0]['id'] === $layoutId;
+            $layouts = collect($layouts)->map(function ($layout) use ($layoutId, $sortBy) {
+                $layout['current'] = $layout['id'] === $layoutId;
+                $layout['custom'] = true;
+                $layout['sort'] = $sortBy;
+
+                return $layout;
+            })->toArray();
             DataGrid::updateConfigurationValue($ref, 'layouts', $layouts);
         }
 
@@ -80,28 +87,64 @@ class DataGridController extends Controller
         return redirect()->back();
     }
 
+    //function sued to add new custom layouts
+    public function add($ref, Request $request): RedirectResponse
+    {
+        $layout = $request->get('layout');
+        $layout['custom'] = true;
+        $layout['current'] = true;
+        $config = DataGrid::getConfigurationData($ref);
+        $layouts = collect($config['layouts'])->map(function ($layout) {
+            $layout['current'] = false;
+            return $layout;
+        })->toArray();
+        $layouts[] = $layout;
+        DataGrid::updateConfigurationValue($ref, 'layouts', $layouts);
+        DataGrid::updateConfigurationValue($ref, 'currentLayout', $layout['id']);
+
+        return redirect()->back();
+    }
+
+    public function remove($ref, Request $request): RedirectResponse
+    {
+        $layout = $request->get('layout');
+        $config = DataGrid::getConfigurationData($ref);
+        $currentId = $config['currentLayout'];
+        $layouts = collect($config['layouts'])->reject(function ($value) use ($layout, $currentId, $ref) {
+            if ($currentId === $value['id']) {
+                DataGrid::updateConfigurationValue($ref, 'currentLayout', null);
+            }
+
+            return $value['id'] === $layout['id'];
+        });
+
+        DataGrid::updateConfigurationValue($ref, 'layouts', $layouts);
+
+        return redirect()->back();
+    }
+
     //function used to create a custom layout and apply it from the front-end
     public function view($ref, Request $request): RedirectResponse
     {
-        $columns = $request->get('columns', []);
-        $visibleColumns = collect($columns)->where('hidden', false);
-        $layoutColumns = $visibleColumns->map(function ($column) {
+        $columns = collect($request->get('columns', []));
+        $layoutColumns = $columns->map(function ($column) {
             $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
             return [
                 'value' => $value,
                 'order' => $column['index'],
-                'hidden' => false,
+                'hidden' => $column['hidden'],
             ];
         });
-        $id = 'custom_1';
+        $id = 'custom_hidden';
         $layout = [
             'id' => $id,
             'columns' => $layoutColumns->toArray(),
-            'label' => 'Custom View',
-            'current' => true,
+            'label' => null,
+            'current' => false,
+            'custom' => true,
         ];
 
-        if ($visibleColumns->count() > 0) {
+        if ($columns->count() > 0) {
             DataGrid::updateConfigurationValue($ref, 'currentLayout', $id);
             DataGrid::updateConfigurationValue($ref, 'layouts', [$layout]);
         }

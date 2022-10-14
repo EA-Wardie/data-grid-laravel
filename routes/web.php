@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => '/datagrid', 'as' => 'datagrid.', 'middleware' => ['web', 'auth']], function () {
     Route::post('/{ref}/layout', [DataGridController::class, 'layout'])
         ->name('layout');
+    Route::post('/{ref}/add', [DataGridController::class, 'add'])
+        ->name('add');
+    Route::post('/{ref}/remove', [DataGridController::class, 'remove'])
+        ->name('remove');
     Route::post('/{ref}/view', [DataGridController::class, 'view'])
         ->name('view');
     Route::post('/{ref}/filters', [DataGridController::class, 'filters'])
