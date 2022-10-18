@@ -13,40 +13,26 @@ class ColumnDefinition implements Arrayable
 {
     //all column properties
     private string $timestampFormat = 'D MMMM YYYY';
-
     private string $type = 'text';
-
     private string $label = '';
-
     private ?string $avatar = null;
-
     private ?string $value = null;
-
     private ?string $rawValue = null;
-
     private ?string $subtitle = null;
-
+    private string $subtitleLabel = '';
     private ?string $rawSubtitle = null;
-
     private ?string $subtitleType = null;
-
     private ?string $iconConditionValue = null;
-
     private array $enumerators = [];
-
     private array $iconMap = [];
-
     private bool $hidden = false;
-
     private bool $searchable = true;
-
     private bool $sortable = true;
-
     private bool $isRaw = false;
-
     private bool $isAggregate = false;
-
+    private bool $subtitleIsAggregate = false;
     private bool $avatarPreview = true;
+    private bool $subtitleIsRaw = false;
 
     //all column types
     private const COLUMN_TYPES = ['text', 'email', 'number', 'perc', 'timestamp', 'enum', 'icon'];
@@ -137,7 +123,7 @@ class ColumnDefinition implements Arrayable
      * @throws Throwable
      */
     //function to specify the subtitle value identifier of the column
-    public function subtitle(string $subtitle): ColumnDefinition
+    public function subtitle(string $subtitle, string $label, string $rawValue = null): ColumnDefinition
     {
         if (str_contains($subtitle, '.')) {
             $valueArray = explode('.', $subtitle);
@@ -146,8 +132,15 @@ class ColumnDefinition implements Arrayable
             $this->subtitle = $subtitle;
         }
 
-        if (!$this->rawSubtitle) {
+        $this->subtitleLabel = $label;
+
+        if (!$rawValue) {
             $this->rawSubtitle = $subtitle;
+            $this->subtitleIsRaw = false;
+        } else {
+            $this->rawSubtitle = $rawValue;
+            $this->subtitleIsRaw = true;
+            $this->subtitleIsAggregate = Str::contains(strtoupper($rawValue), DataGridConstants::AGGREGATES);
         }
 
         $this->validateSubtitle();
@@ -162,6 +155,8 @@ class ColumnDefinition implements Arrayable
     public function rawSubtitle($rawValue): ColumnDefinition
     {
         $this->rawSubtitle = $rawValue;
+        $this->subtitleIsRaw = false;
+        $this->subtitleIsAggregate = Str::contains(strtoupper($rawValue), DataGridConstants::AGGREGATES);
         $this->validateRawSubtitle();
 
         return $this;
@@ -279,6 +274,9 @@ class ColumnDefinition implements Arrayable
             'isAdvanced' => in_array($this->type, self::ADVANCED_COLUMN_TYPES),
             'iconConditionValue' => explode('.', $this->iconConditionValue)[1] ?? null,
             'iconConditionRawValue' => $this->iconConditionValue ?? null,
+            'subtitleLabel' => $this->subtitleLabel,
+            'subtitleIsRaw' => $this->subtitleIsRaw,
+            'subtitleIsAggregate' => $this->subtitleIsAggregate,
         ];
     }
 
@@ -317,7 +315,8 @@ class ColumnDefinition implements Arrayable
     //very similar to validating the column value
     private function validateSubtitle()
     {
-        throw_if(str_contains(strtolower($this->subtitle), ' as '), new Exception("Subtitle cannot contain sql identifiers like 'AS'. Use rawSubtitle() instead."));
+        throw_if(!$this->subtitleLabel, new Exception("A subtitle label is required when using subtitle()."));
+        throw_if(str_contains(strtolower($this->subtitle), ' as '), new Exception("Subtitle cannot contain SQL identifiers like 'AS'. Use rawSubtitle() instead with subtitle() as the alias."));
     }
 
     /**

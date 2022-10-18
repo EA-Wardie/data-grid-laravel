@@ -10,8 +10,10 @@ class ViewDefinition implements Arrayable
 {
     //all view properties
     private array $columns = [];
-    private array $sortBy = [];
     private string $label = '';
+    private array $search = [];
+    private array $sortBy = [];
+    private array $filters = [];
 
     public function __construct()
     {
@@ -19,21 +21,14 @@ class ViewDefinition implements Arrayable
 
     //function to specify a view column
     //column must exist in dat grid
-    public function column(string $value, int $order = 0, bool $hidden = false): self
+    public function column(string $value, bool $hidden = false): self
     {
+        $index = count($this->columns);
         $this->columns[] = [
             'value' => $value,
-            'order' => $order,
+            'order' => max($index, 0),
             'hidden' => $hidden,
         ];
-
-        return $this;
-    }
-
-    //function used to pass a key -> value pair for column sorting
-    public function sort(array $sortBy = []): self
-    {
-        $this->sortBy = $sortBy;
 
         return $this;
     }
@@ -49,6 +44,36 @@ class ViewDefinition implements Arrayable
         return $this;
     }
 
+    //function used to pass pre-defined key -> value pairs for search queries
+    public function search(array $search = []): self
+    {
+        $content = [
+            'initial' => false,
+            'recommendations' => [],
+            'queries' => $search,
+        ];
+
+        $this->search = $content;
+
+        return $this;
+    }
+
+    //function used to pass pre-defined key -> value pairs for column sorting
+    public function sortBy(array $sortBy = []): self
+    {
+        $this->sortBy = $sortBy;
+
+        return $this;
+    }
+
+    //function used to pass pre-defined key -> value pairs for filters
+    public function filters(array $filters = []): self
+    {
+        $this->filters = $filters;
+
+        return $this;
+    }
+
     /**
      * @throws Throwable
      */
@@ -60,7 +85,9 @@ class ViewDefinition implements Arrayable
 
         return [
             'columns' => $this->columns,
+            'search' => $this->search,
             'sort' => $this->sortBy,
+            'filters' => $this->filters,
             'label' => $this->label,
         ];
     }

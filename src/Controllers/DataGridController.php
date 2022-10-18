@@ -9,6 +9,18 @@ use Illuminate\Http\Request;
 
 class DataGridController extends Controller
 {
+    //function to set search from front-end when using search in a session context
+    public function search($ref, Request $request): RedirectResponse
+    {
+        $search = $request->get('search', []);
+        $session = session($ref);
+        $session['search'] = $search;
+        session()->put($ref, $session);
+        DataGrid::updateConfigurationValue($ref, 'currentLayout', 'custom_hidden');
+
+        return redirect()->back();
+    }
+
     //function to set filter from front-end
     //can be used with data config or session
     public function filters($ref, Request $request): RedirectResponse
@@ -18,20 +30,7 @@ class DataGridController extends Controller
         $session = session($ref);
         $session['filters'] = $filters;
         session()->put($ref, $session);
-
         DataGrid::updateConfigurationValue($ref, 'filters', $filters);
-
-        return redirect()->back();
-    }
-
-    //function to set search from front-end when using search in a session context
-    public function search($ref, Request $request): RedirectResponse
-    {
-        $search = $request->get('search', []);
-        $session = session($ref);
-        $session['search'] = $search;
-
-        session()->put($ref, $session);
 
         return redirect()->back();
     }
@@ -62,27 +61,20 @@ class DataGridController extends Controller
     public function layout($ref, Request $request): RedirectResponse
     {
         $layoutId = $request->get('layout');
-        $sortBy = $request->get('sort', []);
         DataGrid::updateConfigurationValue($ref, 'currentLayout', $layoutId);
 
         $config = DataGrid::getConfigurationData($ref);
         $layouts = $config['layouts'];
 
         if (count($layouts) > 0) {
-            $layouts = collect($layouts)->map(function ($layout) use ($layoutId, $sortBy) {
+            $layouts = collect($layouts)->map(function ($layout) use ($layoutId) {
                 $layout['current'] = $layout['id'] === $layoutId;
                 $layout['custom'] = true;
-                $layout['sort'] = $sortBy;
 
                 return $layout;
             })->toArray();
             DataGrid::updateConfigurationValue($ref, 'layouts', $layouts);
         }
-
-        $session = session($ref);
-        $session['filters'] = [];
-        session()->put($ref, $session);
-        DataGrid::updateConfigurationValue($ref, 'filters', []);
 
         return redirect()->back();
     }
@@ -91,8 +83,14 @@ class DataGridController extends Controller
     public function add($ref, Request $request): RedirectResponse
     {
         $layout = $request->get('layout');
+        $search = $request->get('search', []);
+        $sortBy = $request->get('sorBy', []);
+        $filters = $request->get('filters', []);
         $layout['custom'] = true;
         $layout['current'] = true;
+        $layout['search'] = $search;
+        $layout['sort'] = $sortBy;
+        $layout['filters'] = $filters;
         $config = DataGrid::getConfigurationData($ref);
         $layouts = collect($config['layouts'])->map(function ($layout) {
             $layout['current'] = false;
@@ -102,9 +100,15 @@ class DataGridController extends Controller
         DataGrid::updateConfigurationValue($ref, 'layouts', $layouts);
         DataGrid::updateConfigurationValue($ref, 'currentLayout', $layout['id']);
 
+        $session = session($ref);
+        $session['filters'] = [];
+        session()->put($ref, $session);
+        DataGrid::updateConfigurationValue($ref, 'filters', []);
+
         return redirect()->back();
     }
 
+    //function sued to remove custom layouts
     public function remove($ref, Request $request): RedirectResponse
     {
         $layout = $request->get('layout');
@@ -123,7 +127,7 @@ class DataGridController extends Controller
         return redirect()->back();
     }
 
-    //function used to create a custom layout and apply it from the front-end
+    //function used to switch between layouts
     public function view($ref, Request $request): RedirectResponse
     {
         $columns = collect($request->get('columns', []));
@@ -149,6 +153,6 @@ class DataGridController extends Controller
             DataGrid::updateConfigurationValue($ref, 'layouts', [$layout]);
         }
 
-        return redirect()->back();
+        return redirect()->back()->with('or', true);
     }
 }

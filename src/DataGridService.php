@@ -28,7 +28,6 @@ class DataGridService
     private int $totalPages = 0;
     private array $search = [
         'term' => '',
-        'initial' => true,
         'recommendations' => [],
         'queries' => [],
     ];
@@ -280,8 +279,10 @@ class DataGridService
             return [
                 'id' => $id,
                 'columns' => $layout['columns'],
-                'sort' => $layout['sort'],
                 'label' => $layout['label'],
+                'search' => $layout['search'],
+                'sort' => $layout['sort'],
+                'filters' => $layout['filters'],
                 'current' => $this->existingConfig['currentLayout'] === $id,
                 'custom' => false,
             ];
@@ -382,7 +383,6 @@ class DataGridService
     {
         $defaultSearch = [
             'term' => '',
-            'initial' => true,
             'recommendations' => [],
             'queries' => [],
         ];
@@ -441,9 +441,19 @@ class DataGridService
     private function applyLayout()
     {
         if (isset($this->existingConfig['currentLayout']) && (bool)$this->existingConfig['currentLayout']) {
-            $layout = collect($this->layouts)->firstWhere('id', $this->existingConfig['currentLayout']);
-            if (!$layout) {
-                $layout = collect($this->existingConfig['layouts'])->firstWhere('id', $this->existingConfig['currentLayout']);
+            $layouts = collect($this->layouts)->merge($this->existingConfig['layouts']);
+            $layout = $layouts->firstWhere('id', $this->existingConfig['currentLayout']);
+
+            if (isset($layout['search'])) {
+                $this->search = $layout['search'];
+            }
+
+            if (isset($layout['sort'])) {
+                $this->sortBy = $layout['sort'];
+            }
+
+            if (isset($layout['filters'])) {
+                $this->filters = $layout['filters'];
             }
 
             $this->columns = collect($this->columns)->map(function ($column) use ($layout) {
@@ -453,10 +463,6 @@ class DataGridService
                 if ((bool)$found) {
                     $column['hidden'] = $found['hidden'];
                     $column['index'] = $found['order'];
-
-                    if (isset($found['sort'])) {
-                        $this->sortBy = $found['sort'];
-                    }
                 } else {
                     $column['hidden'] = true;
                 }
@@ -501,7 +507,6 @@ class DataGridService
     {
         $this->applySelects();
         $this->applySortBy();
-        $this->getSearchRecommendations();
         $this->applySearch();
         $this->applyFilters();
     }
@@ -547,7 +552,7 @@ class DataGridService
         $this->query->addSelect(DB::raw($column['rawValue'] . ($column['isRaw'] ? ' AS ' . $column['value'] : '')));
 
         if (isset($column['rawSubtitle']) && (bool)$column['rawSubtitle']) {
-            $this->query->addSelect(DB::raw($column['rawSubtitle']));
+            $this->query->addSelect(DB::raw($column['rawSubtitle'] . ' AS ' . $column['subtitle']));
         }
 
         if (isset($column['iconConditionRawValue']) && (bool)$column['iconConditionRawValue']) {
@@ -570,30 +575,13 @@ class DataGridService
     {
         if (count($this->sortBy) > 0) {
             foreach ($this->sortBy as $value => $direction) {
-                $this->query->orderBy($value, $direction);
-            }
-        }
-    }
-
-    private function getSearchRecommendations()
-    {
-        $this->search['recommendations'] = [];
-        foreach ($this->columns as $column) {
-            if (!$column['hidden'] && $column['searchable'] && !$column['isAdvanced'] && isset($this->search['term']) && (bool)$this->search['term']) {
-                $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
-                $this->search['recommendations'][] = [
-                    'text' => $column['label'] . ' contains <b>"' . $this->search['term'] . '"</b>',
-                    'value' => $value,
-                    'type' => $column['type'],
-                ];
-
-                if ((isset($column['subtitle']) && !!$column['subtitle']) || (isset($column['rawSubtitle']) && !!$column['rawSubtitle'])) {
-                    $this->search['recommendations'][] = [
-                        'text' => $column['label'] . ' subtitle contains <b>"' . $this->search['term'] . '"</b>',
-                        'value' => $column['rawSubtitle'] ?? $column['subtitle'],
-                        'type' => $column['subtitleType'],
-                    ];
+                $column = collect($this->columns)->firstWhere('value', $value);
+                if (!$column) {
+                    $column = collect($this->columns)->firstWhere('rawValue', $value);
                 }
+
+                $innerValue = $column['isRaw'] ? $column['value'] : $column['rawValue'];
+                $this->query->orderBy(DB::raw($innerValue), $direction);
             }
         }
     }
@@ -605,27 +593,31 @@ class DataGridService
         if (isset($this->search['queries']) && count($this->search['queries']) > 0) {
             $index = 0;
             foreach ($this->search['queries'] as $key => $terms) {
+                $isSubtitle = false;
                 $column = collect($this->columns)->firstWhere('rawValue', $key);
                 if (!$column) {
                     $column = collect($this->columns)->firstWhere('value', $key);
                 }
-                if (!$column) {
-                    $column = collect($this->columns)->firstWhere('subtitle', $key);
-                }
+
                 if (!$column) {
                     $column = collect($this->columns)->firstWhere('rawSubtitle', $key);
+                    $isSubtitle = true;
+                }
+                if (!$column) {
+                    $column = collect($this->columns)->firstWhere('subtitle', $key);
+                    $isSubtitle = true;
                 }
 
                 if ($index === 0) {
-                    $clause = $column['isAggregate'] ? 'havingRaw' : 'whereRaw';
+                    $clause = $column['isAggregate'] || $column['subtitleIsAggregate'] ? 'havingRaw' : 'whereRaw';
                 } else {
-                    $clause = $column['isAggregate'] ? 'orHavingRaw' : 'orWhereRaw';
+                    $clause = $column['isAggregate'] || $column['subtitleIsAggregate'] ? 'orHavingRaw' : 'orWhereRaw';
                 }
 
                 if ($column) {
-                    $this->query->where(function ($query) use ($column, $clause, $terms) {
+                    $this->query->where(function ($query) use ($column, $clause, $terms, $isSubtitle) {
                         foreach ($terms as $term) {
-                            $query->$clause($column['rawValue'] . ' LIKE "%' . strtolower($term) . '%"');
+                            $query->$clause((!$isSubtitle ? $column['rawValue'] : $column['rawSubtitle']) . ' LIKE "%' . strtolower($term) . '%"');
                         }
                     });
                 }
@@ -633,10 +625,10 @@ class DataGridService
             }
         }
 
-        if (!$this->search['initial']) {
-            $this->search['term'] = '';
-            $this->search['recommendations'] = [];
-        }
+//        if (!$this->search['initial']) {
+        $this->search['term'] = '';
+//            $this->search['recommendations'] = [];
+//        }
 
         $this->prepareMetaData();
     }
@@ -650,15 +642,23 @@ class DataGridService
                 if (count($filter) > 0) {
                     $clause = 'where';
                     $identifier = str_replace('_icon', '', $key);
-                    $operator = $filter['operator'] === '===' ? '=' : $filter['operator'];
+                    $operator = $filter['operator'];
                     $column = collect($this->columns)->firstWhere('rawValue', $identifier);
+
+                    //find a better solution for time inclusive dates
+                    if ($operator === '=' || $operator === '===') {
+                        $operator = 'LIKE';
+                        $filter['value'] .= '%';
+                    }
 
                     if (isset($column['isAggregate']) && $column['isAggregate']) {
                         $identifier = $column['value'];
                         $clause = 'having';
                     }
 
-                    $this->query->$clause($identifier, $operator, $filter['value']);
+                    if (!$column['hidden']) {
+                        $this->query->$clause($identifier, $operator, $filter['value']);
+                    }
                 }
             }
         }
@@ -772,8 +772,19 @@ class DataGridService
         return collect($icons[$index])->only(['icon', 'color', 'tooltip'])->toArray();
     }
 
-    //add one column to the total columns of the data grid
-    private function column(string $value, string $rawValue, string $label, string $type, int $index = 0, bool $searchable = false, bool $sortable = false, array $iconMap = [], array $enumerators = [], bool $hidden = false)
+    //append one column to the total columns of the data grid
+    private function column(
+        string $value,
+        string $rawValue,
+        string $label,
+        string $type,
+        int    $index = 0,
+        bool   $searchable = false,
+        bool   $sortable = false,
+        array  $iconMap = [],
+        array  $enumerators = [],
+        bool   $hidden = false
+    )
     {
         $this->columns[] = [
             'value' => $value,
