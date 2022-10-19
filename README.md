@@ -132,6 +132,11 @@ The `setPage()` function can be used to set the current page number.
 
 The `getreference()` function can be used to get the data grid reference.
 
+### `defaultOrderBy()`
+
+The `defaultOrderBy()` function is used to pass default orders to the table.
+These apply by default if no user input exists.
+
 ### `setColumns()`
 
 The `setColumns()` function can be used to set the data grid columns.

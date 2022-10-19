@@ -6,6 +6,7 @@ use Closure;
 use Eawardie\DataGrid\Definitions\ColumnDefinition;
 use Eawardie\DataGrid\Definitions\IconDefinition;
 use Eawardie\DataGrid\Definitions\ViewDefinition;
+use Eawardie\DataGrid\Models\DataGrid;
 use Eawardie\DataGrid\Traits\DynamicCompare;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -46,6 +47,7 @@ class DataGridService
     private array $additionalSelects = [];
     private array $loadRelationships = [];
     private array $additionalRawSelects = [];
+    private array $defaultOrderBy = [];
 
     //indicates column types that are accepted as advanced
     private const ADVANCED_COLUMN_TYPES = ['number', 'perc', 'timestamp', 'enum', 'icon'];
@@ -116,6 +118,15 @@ class DataGridService
     public function getReference(): ?string
     {
         return $this->ref;
+    }
+
+    //function used to pass key -> value pairs for default column orders
+    //this is ignored if anu user changes are passed in the request
+    public function defaultOrderBy(array $orders): self
+    {
+        $this->defaultOrderBy = $orders;
+
+        return $this;
     }
 
     //returns the current data grid columns
@@ -381,30 +392,61 @@ class DataGridService
     //changes may take effect based on route, session of config settings
     private function setFromRequest()
     {
+        $this->preparePaging();
+        $this->prepareSearch();
+        $this->prepareOrderBy();
+        $this->prepareFilters();
+    }
+
+    private function preparePaging()
+    {
+        if (!$this->pageWithSession) {
+            $this->page = $this->request->get('page', 1);
+        } else {
+            $this->page = session($this->ref)['page'] ?? 1;
+        }
+    }
+
+    private function prepareSearch()
+    {
         $defaultSearch = [
             'term' => '',
             'recommendations' => [],
             'queries' => [],
         ];
 
-        if (!$this->pageWithSession) {
-            $this->page = $this->request->get('page', 1);
+        if (!$this->searchWithSession) {
+            $this->search = $this->request->get('search', $defaultSearch);
         } else {
-            $this->page = session($this->ref)['page'] ?? 1;
+            $this->search = session($this->ref)['search'] ?? $defaultSearch;
         }
+    }
 
+    private function prepareOrderBy()
+    {
         if (!$this->sortWithSession) {
             $this->sortBy = $this->request->get('sortBy', []);
         } else {
             $this->sortBy = session($this->ref)['sortBy'] ?? [];
         }
 
-        if (!$this->searchWithSession) {
-            $this->search = $this->request->get('search', $defaultSearch);
-        } else {
-            $this->search = session($this->ref)['search'] ?? $defaultSearch;
-        }
+        $orders = $this->query->getQuery()->orders;
+        $this->query->getQuery()->orders = [];
+        $hasUserSort = $this->request->has('sortBy') && count($this->request->get('sortBy')) > 0;
 
+        if (!$hasUserSort && count($orders) > 0 && count($this->defaultOrderBy) === 0) {
+            foreach ($orders as $order) {
+                $this->sortBy[$order['column']] = $order['direction'];
+            }
+        } else if (!$hasUserSort && count($this->defaultOrderBy) > 0) {
+            foreach ($this->defaultOrderBy as $column => $direction) {
+                $this->sortBy[$column] = $direction;
+            }
+        }
+    }
+
+    private function prepareFilters()
+    {
         if (!$this->filterWithConfig) {
             $this->filters = session($this->ref)['filters'] ?? [];
         } else {
@@ -440,7 +482,11 @@ class DataGridService
     //can also be a custom layout created by the user
     private function applyLayout()
     {
-        if (isset($this->existingConfig['currentLayout']) && (bool)$this->existingConfig['currentLayout']) {
+        $hasUserInput = $this->request->has('search') || $this->request->has('sortBy') || $this->request->has('filters');
+        if ($hasUserInput) {
+            $this->existingConfig['currentLayout'] = null;
+            Models\DataGrid::updateConfigurationValue($this->ref, 'currentLayout', $this->existingConfig['currentLayout']);
+        } else if (isset($this->existingConfig['currentLayout']) && $this->existingConfig['currentLayout']) {
             $layouts = collect($this->layouts)->merge($this->existingConfig['layouts']);
             $layout = $layouts->firstWhere('id', $this->existingConfig['currentLayout']);
 
@@ -460,7 +506,7 @@ class DataGridService
                 $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
                 $found = collect($layout['columns'])->firstWhere('value', $value);
 
-                if ((bool)$found) {
+                if ($found) {
                     $column['hidden'] = $found['hidden'];
                     $column['index'] = $found['order'];
                 } else {
@@ -490,6 +536,8 @@ class DataGridService
                 'tableRef' => $this->ref,
                 'layouts' => [],
                 'currentLayout' => null,
+                'search' => [],
+                'sort' => [],
                 'filters' => [],
             ];
 
@@ -551,11 +599,11 @@ class DataGridService
     {
         $this->query->addSelect(DB::raw($column['rawValue'] . ($column['isRaw'] ? ' AS ' . $column['value'] : '')));
 
-        if (isset($column['rawSubtitle']) && (bool)$column['rawSubtitle']) {
+        if (isset($column['rawSubtitle']) && $column['rawSubtitle']) {
             $this->query->addSelect(DB::raw($column['rawSubtitle'] . ' AS ' . $column['subtitle']));
         }
 
-        if (isset($column['iconConditionRawValue']) && (bool)$column['iconConditionRawValue']) {
+        if (isset($column['iconConditionRawValue']) && $column['iconConditionRawValue']) {
             $this->query->addSelect(DB::raw($column['iconConditionRawValue'] . ' AS ' . $column['iconConditionValue']));
         }
     }
@@ -728,7 +776,7 @@ class DataGridService
     //generates avatar URLs based on previously selected avatar values
     private function generateAvatarUrl($item): ?string
     {
-        if (isset($item['file_key']) && (bool)$item['file_key']) {
+        if (isset($item['file_key']) && $item['file_key']) {
             return Storage::disk($item['file_disk'])
                 ->temporaryUrl($item['file_key'], Carbon::now()->addMinutes(config('filesystems.validity')));
         }
