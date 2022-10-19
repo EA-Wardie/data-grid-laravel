@@ -432,9 +432,10 @@ class DataGridService
 
         $orders = $this->query->getQuery()->orders;
         $this->query->getQuery()->orders = [];
+        $hasExistingOrders = $orders && count($orders) > 0;
         $hasUserSort = $this->request->has('sortBy') && count($this->request->get('sortBy')) > 0;
 
-        if (!$hasUserSort && count($orders) > 0 && count($this->defaultOrderBy) === 0) {
+        if (!$hasUserSort && $hasExistingOrders && count($this->defaultOrderBy) === 0) {
             foreach ($orders as $order) {
                 $this->sortBy[$order['column']] = $order['direction'];
             }
