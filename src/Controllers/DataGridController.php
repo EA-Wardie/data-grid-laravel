@@ -12,11 +12,12 @@ class DataGridController extends Controller
     //function to set search from front-end when using search in a session context
     public function search($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $search = $request->get('search', []);
         $session = session($ref);
         $session['search'] = $search;
         session()->put($ref, $session);
-        DataGrid::updateConfigurationValue($ref, 'currentLayout', 'custom_hidden');
+        DataGrid::updateConfigurationValue($ref, 'currentLayout', null);
 
         return redirect()->back();
     }
@@ -25,12 +26,14 @@ class DataGridController extends Controller
     //can be used with data config or session
     public function filters($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $filters = $request->get('filters', []);
 
         $session = session($ref);
         $session['filters'] = $filters;
         session()->put($ref, $session);
         DataGrid::updateConfigurationValue($ref, 'filters', $filters);
+        DataGrid::updateConfigurationValue($ref, 'currentLayout', null);
 
         return redirect()->back();
     }
@@ -38,10 +41,12 @@ class DataGridController extends Controller
     //function to set sort from front-end when using sort in a session context
     public function sort($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $sortBy = $request->get('sortBy', []);
         $session = session($ref);
         $session['sortBy'] = $sortBy;
         session()->put($ref, $session);
+        DataGrid::updateConfigurationValue($ref, 'currentLayout', null);
 
         return redirect()->back();
     }
@@ -49,6 +54,7 @@ class DataGridController extends Controller
     //function to set page from front-end when using page in a session context
     public function page($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $page = $request->get('page', 1);
         $session = session($ref);
         $session['page'] = $page;
@@ -60,6 +66,7 @@ class DataGridController extends Controller
     //function to set the selected layout from the front-end
     public function layout($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $layoutId = $request->get('layout');
         DataGrid::updateConfigurationValue($ref, 'currentLayout', $layoutId);
 
@@ -82,6 +89,7 @@ class DataGridController extends Controller
     //function sued to add new custom layouts
     public function add($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $layout = $request->get('layout');
         $search = $request->get('search', []);
         $sortBy = $request->get('sorBy', []);
@@ -111,6 +119,7 @@ class DataGridController extends Controller
     //function sued to remove custom layouts
     public function remove($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $layout = $request->get('layout');
         $config = DataGrid::getConfigurationData($ref);
         $currentId = $config['currentLayout'];
@@ -130,6 +139,7 @@ class DataGridController extends Controller
     //function used to switch between layouts
     public function view($ref, Request $request): RedirectResponse
     {
+        $ref = base64_decode($ref);
         $columns = collect($request->get('columns', []));
         $layoutColumns = $columns->map(function ($column) {
             $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];

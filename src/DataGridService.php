@@ -6,7 +6,6 @@ use Closure;
 use Eawardie\DataGrid\Definitions\ColumnDefinition;
 use Eawardie\DataGrid\Definitions\IconDefinition;
 use Eawardie\DataGrid\Definitions\ViewDefinition;
-use Eawardie\DataGrid\Models\DataGrid;
 use Eawardie\DataGrid\Traits\DynamicCompare;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -469,6 +468,7 @@ class DataGridService
             'search' => $this->search,
             'columns' => $this->columns,
             'layouts' => $this->layouts,
+            'currentLayout' => $this->existingConfig['currentLayout'],
             'hyperlinks' => $this->hyperlinks,
             'states' => [
                 'filter' => $this->filterWithConfig ? 'config' : 'session',
@@ -483,39 +483,37 @@ class DataGridService
     //can also be a custom layout created by the user
     private function applyLayout()
     {
-        $hasUserInput = $this->request->has('search') || $this->request->has('sortBy') || $this->request->has('filters');
-        if ($hasUserInput) {
-            $this->existingConfig['currentLayout'] = null;
-            Models\DataGrid::updateConfigurationValue($this->ref, 'currentLayout', $this->existingConfig['currentLayout']);
-        } else if (isset($this->existingConfig['currentLayout']) && $this->existingConfig['currentLayout']) {
+        if (isset($this->existingConfig['currentLayout']) && $this->existingConfig['currentLayout']) {
             $layouts = collect($this->layouts)->merge($this->existingConfig['layouts']);
             $layout = $layouts->firstWhere('id', $this->existingConfig['currentLayout']);
 
-            if (isset($layout['search'])) {
-                $this->search = $layout['search'];
-            }
-
-            if (isset($layout['sort'])) {
-                $this->sortBy = $layout['sort'];
-            }
-
-            if (isset($layout['filters'])) {
-                $this->filters = $layout['filters'];
-            }
-
-            $this->columns = collect($this->columns)->map(function ($column) use ($layout) {
-                $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
-                $found = collect($layout['columns'])->firstWhere('value', $value);
-
-                if ($found) {
-                    $column['hidden'] = $found['hidden'];
-                    $column['index'] = $found['order'];
-                } else {
-                    $column['hidden'] = true;
+            if ($layout) {
+                if (isset($layout['search'])) {
+                    $this->search = $layout['search'];
                 }
 
-                return $column;
-            })->toArray();
+                if (isset($layout['sort'])) {
+                    $this->sortBy = $layout['sort'];
+                }
+
+                if (isset($layout['filters'])) {
+                    $this->filters = $layout['filters'];
+                }
+
+                $this->columns = collect($this->columns)->map(function ($column) use ($layout) {
+                    $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
+                    $found = collect($layout['columns'])->firstWhere('value', $value);
+
+                    if ($found) {
+                        $column['hidden'] = $found['hidden'];
+                        $column['index'] = $found['order'];
+                    } else {
+                        $column['hidden'] = true;
+                    }
+
+                    return $column;
+                })->toArray();
+            }
         }
     }
 
@@ -674,11 +672,7 @@ class DataGridService
             }
         }
 
-//        if (!$this->search['initial']) {
         $this->search['term'] = '';
-//            $this->search['recommendations'] = [];
-//        }
-
         $this->prepareMetaData();
     }
 
