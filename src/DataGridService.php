@@ -688,19 +688,36 @@ class DataGridService
                     $operator = $filter['operator'];
                     $column = collect($this->columns)->firstWhere('rawValue', $identifier);
 
-                    //find a better solution for time inclusive dates
-                    if ($operator === '=' || $operator === '===') {
-                        $operator = 'LIKE';
-                        $filter['value'] .= '%';
+                    if (!$column) {
+                        $column = collect($this->columns)->firstWhere('value', $identifier);
                     }
 
-                    if (isset($column['isAggregate']) && $column['isAggregate']) {
-                        $identifier = $column['value'];
-                        $clause = 'having';
+                    if (!$column) {
+                        $column = collect($this->columns)->firstWhere('iconConditionRawValue', $identifier);
                     }
 
-                    if (!$column['hidden']) {
-                        $this->query->$clause($identifier, $operator, $filter['value']);
+                    if (!$column) {
+                        $column = collect($this->columns)->firstWhere('iconConditionValue', $identifier);
+                    }
+
+                    if ($column) {
+                        if ($operator === '=' || $operator === '===') {
+                            $operator = 'LIKE';
+
+                            //find a better solution for time inclusive dates
+                            if ($column['type'] === 'timestamp') {
+                                $filter['value'] .= '%';
+                            }
+                        }
+
+                        if (isset($column['isAggregate']) && $column['isAggregate']) {
+                            $identifier = $column['value'];
+                            $clause = 'having';
+                        }
+
+                        if (!$column['hidden']) {
+                            $this->query->$clause($identifier, $operator, $filter['value']);
+                        }
                     }
                 }
             }
