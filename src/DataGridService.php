@@ -6,6 +6,7 @@ use Closure;
 use Eawardie\DataGrid\Definitions\ColumnDefinition;
 use Eawardie\DataGrid\Definitions\IconDefinition;
 use Eawardie\DataGrid\Definitions\ViewDefinition;
+use Eawardie\DataGrid\Models\DataGrid;
 use Eawardie\DataGrid\Traits\DynamicCompare;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -395,6 +396,15 @@ class DataGridService
         $this->prepareSearch();
         $this->prepareOrderBy();
         $this->prepareFilters();
+
+        if ($this->request->has('rl') && (int)$this->request->get('rl', 0) === 1) {
+            DataGrid::updateConfigurationValue($this->ref, 'currentLayout', null);
+            $this->layouts = collect($this->layouts)->map(function ($layout) {
+                $layout['current'] = false;
+                return $layout;
+            })->toArray();
+            $this->existingConfig['currentLayout'] = null;
+        }
     }
 
     private function preparePaging()
@@ -611,9 +621,9 @@ class DataGridService
     private function selectAvatar(array $column)
     {
         if (isset($column['avatar'])) {
-            $this->query->leftJoin('file', $column['avatar'], 'file.fileid');
-            $this->query->addSelect('file.thumbnail_key AS file_key');
-            $this->query->addSelect('file.disk AS file_disk');
+            $this->query->leftJoin('file AS ' . $column['value'] . '_file', $column['avatar'], '=', $column['value'] . '_file.fileid');
+            $this->query->addSelect($column['value'] . '_file.thumbnail_key AS ' . $column['value'] . '_file_key');
+            $this->query->addSelect($column['value'] . '_file.disk AS ' . $column['value'] . '_file_disk');
         }
     }
 
@@ -656,9 +666,15 @@ class DataGridService
                 }
 
                 if ($index === 0) {
-                    $clause = $column['isAggregate'] || $column['subtitleIsAggregate'] ? 'havingRaw' : 'whereRaw';
+                    $clause = ((isset($column['isAggregate']) && $column['isAggregate'])
+                        || (isset($column['subtitleIsAggregate'])) && $column['subtitleIsAggregate'])
+                        ? 'havingRaw'
+                        : 'whereRaw';
                 } else {
-                    $clause = $column['isAggregate'] || $column['subtitleIsAggregate'] ? 'orHavingRaw' : 'orWhereRaw';
+                    $clause = ((isset($column['isAggregate']) && $column['isAggregate'])
+                        || (isset($column['subtitleIsAggregate'])) && $column['subtitleIsAggregate'])
+                        ? 'orHavingRaw'
+                        : 'orWhereRaw';
                 }
 
                 if ($column) {
@@ -685,7 +701,7 @@ class DataGridService
                 if (count($filter) > 0) {
                     $clause = 'where';
                     $identifier = str_replace('_icon', '', $key);
-                    $operator = $filter['operator'];
+                    $operator = $filter['operator'] === '===' ? '=' : $filter['operator'];
                     $column = collect($this->columns)->firstWhere('rawValue', $identifier);
 
                     if (!$column) {
@@ -701,13 +717,10 @@ class DataGridService
                     }
 
                     if ($column) {
-                        if ($operator === '=' || $operator === '===') {
+                        //find a better solution for time inclusive dates
+                        if ($column['type'] === 'timestamp' && $operator === '=') {
                             $operator = 'LIKE';
-
-                            //find a better solution for time inclusive dates
-                            if ($column['type'] === 'timestamp') {
-                                $filter['value'] .= '%';
-                            }
+                            $filter['value'] .= '%';
                         }
 
                         if (isset($column['isAggregate']) && $column['isAggregate']) {
@@ -759,9 +772,11 @@ class DataGridService
 
         foreach ($items as $item) {
             if ($hasAvatarColumns) {
-                $item['avatar_url'] = $this->generateAvatarUrl($item);
-                unset($item['file_key']);
-                unset($item['file_disk']);
+                foreach ($avatarColumns as $column) {
+                    $item[$column['value'] . '_avatar_url'] = $this->generateAvatarUrl($item, $column['value']);
+                    unset($item[$column['value'] . '_file_key']);
+                    unset($item[$column['value'] . '_file_disk']);
+                }
             }
 
             if ($hasIconColumns) {
@@ -786,14 +801,9 @@ class DataGridService
     }
 
     //generates avatar URLs based on previously selected avatar values
-    private function generateAvatarUrl($item): ?string
+    private function generateAvatarUrl($item, $value): ?string
     {
-        if (isset($item['file_key']) && $item['file_key']) {
-            return Storage::disk($item['file_disk'])
-                ->temporaryUrl($item['file_key'], Carbon::now()->addMinutes(config('filesystems.validity')));
-        }
-
-        return null;
+        return Storage::disk($item[$value . '_file_disk'])->temporaryUrl($item[$value . '_file_key'], Carbon::now()->addMinutes(config('filesystems.validity'))) ?? null;
     }
 
     /**

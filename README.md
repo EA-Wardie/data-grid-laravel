@@ -304,7 +304,7 @@ Multiple definitions exists to be used with the `DataGrid` facade. All current a
 
 ### ColumnDefinition
 
-The `ColumnDefintion` class is used to define advanced columns for your data grid.
+The `ColumnDefinition` class is used to define advanced columns for your data grid.
 The `ColumnDefinition` instance can take the following property functions:
 
 #### `avatar(identifier, preview)`
@@ -410,27 +410,54 @@ The function takes 5 possible parameters:
 - `color` - The color of the icon to be used
 - `tooltip` - If set the icon will display a tooltip on hover
 
-#### `search`, `filters` & `sort`
+#### `default()`
+
+The `default()` function is used to specify a default icon to display if none of the conditions evaluate to `true`.
+Also takes a color as a second parameter. this defaults to `grey`.
+
+### `ViewDefinition`
+
+The `ViewDefinition` class is used to define views (layouts) for your data grid.
+The `ViewDefinition` instance can take the following property functions:
+
+#### `column()`
+
+The `column` function is used to specify default states for column in that view. 
+The `column` function takes a column identifier as its first parameter and a bool as its second to indicate if that column should be hidden or not.
+
+- `value` - column identifier - must exist in added column
+- `hidden` - whether column should be hidden or not
+
+An example is shown below:
+
+```php
+function (ViewDefinition $view) use ($progressRaw) {
+   return $view->column('name')
+      ->column('progress', true)
+```
+
+#### `label()`
+
+The label function required and takes a string as an identifier to the pre-defined view. 
+This label is used when selecting this view on the front-end.
+
+#### `search()`, `filters()` & `sort()`
 
 These functions can be used to pass pre-defined searches, filters and/or sorts as required by the developer.
 An example is given below:
 
 ```php
- function (ViewDefinition $view) use ($progressRaw) {
-    return $view->column('name')
-        ->column('progress')
-        ->search(['name' => ['john']])
-        ->sortBy(['name' => 'asc'])
-        ->filters([progress => ['value' => 50, 'operator' => '<']])
+function (ViewDefinition $view) use ($progressRaw) {
+   return $view->column('name')
+      ->column('progress')
+      ->search(['name' => ['john']])
+      ->sortBy(['name' => 'asc'])
+      ->filters([progress => ['value' => 50, 'operator' => '<']])
 ```
+*Definitions will be added for these later*
 
-#### `defualt()`
-
-The `defualt()` function is used to specify a default icon to display if none of the conditions evaluate to `true`.
-Also takes a color as a second parameter. this defaults to `grey`.
-
-**Other available definitions are `EnumDefinition` and `FileDefinition`.
-these are however still under construction and planned for later a release.**
+***Other available definitions are `EnumDefinition` and `FileDefinition`.
+These are however still under construction and planned for later a release.***
 
 ## Conclusion
 
