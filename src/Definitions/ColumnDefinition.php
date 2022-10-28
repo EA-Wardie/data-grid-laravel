@@ -38,7 +38,7 @@ class ColumnDefinition implements Arrayable
     private const COLUMN_TYPES = ['text', 'email', 'number', 'perc', 'timestamp', 'enum', 'icon'];
 
     //all subtitle column types
-    private const SUBTITLE_COLUMN_TYPES = ['text', 'email'];
+    private const SUBTITLE_COLUMN_TYPES = ['text', 'email', 'number', 'timestamp'];
 
     //all column types that are accepted as advanced
     private const ADVANCED_COLUMN_TYPES = ['number', 'perc', 'timestamp', 'enum', 'icon'];

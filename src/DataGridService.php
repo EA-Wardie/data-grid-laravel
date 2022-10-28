@@ -480,6 +480,7 @@ class DataGridService
             'layouts' => $this->layouts,
             'currentLayout' => $this->existingConfig['currentLayout'],
             'hyperlinks' => $this->hyperlinks,
+            'advancedColumnTypes' => self::ADVANCED_COLUMN_TYPES,
             'states' => [
                 'filter' => $this->filterWithConfig ? 'config' : 'session',
                 'search' => $this->searchWithSession ? 'session' : 'route',
@@ -706,6 +707,14 @@ class DataGridService
 
                     if (!$column) {
                         $column = collect($this->columns)->firstWhere('value', $identifier);
+                    }
+
+                    if(!$column) {
+                        $column = collect($this->columns)->firstWhere('subtitle', $identifier);
+                    }
+
+                    if(!$column) {
+                        $column = collect($this->columns)->firstWhere('rawSubtitle', $identifier);
                     }
 
                     if (!$column) {
