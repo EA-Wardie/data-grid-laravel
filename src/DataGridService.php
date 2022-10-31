@@ -2,6 +2,7 @@
 
 namespace Eawardie\DataGrid;
 
+use App\Classes\Utils\CloudfrontUrlGenerator;
 use Closure;
 use Eawardie\DataGrid\Definitions\ColumnDefinition;
 use Eawardie\DataGrid\Definitions\IconDefinition;
@@ -625,6 +626,7 @@ class DataGridService
             $this->query->leftJoin('file AS ' . $column['value'] . '_file', $column['avatar'], '=', $column['value'] . '_file.fileid');
             $this->query->addSelect($column['value'] . '_file.thumbnail_key AS ' . $column['value'] . '_file_key');
             $this->query->addSelect($column['value'] . '_file.disk AS ' . $column['value'] . '_file_disk');
+            $this->query->addSelect($column['value'] . '_file.base_url AS ' . $column['value'] . '_file_base_url');
         }
     }
 
@@ -709,11 +711,11 @@ class DataGridService
                         $column = collect($this->columns)->firstWhere('value', $identifier);
                     }
 
-                    if(!$column) {
+                    if (!$column) {
                         $column = collect($this->columns)->firstWhere('subtitle', $identifier);
                     }
 
-                    if(!$column) {
+                    if (!$column) {
                         $column = collect($this->columns)->firstWhere('rawSubtitle', $identifier);
                     }
 
@@ -785,6 +787,7 @@ class DataGridService
                     $item[$column['value'] . '_avatar_url'] = $this->generateAvatarUrl($item, $column['value']);
                     unset($item[$column['value'] . '_file_key']);
                     unset($item[$column['value'] . '_file_disk']);
+                    unset($item[$column['value'] . '_file_base_url']);
                 }
             }
 
@@ -812,7 +815,19 @@ class DataGridService
     //generates avatar URLs based on previously selected avatar values
     private function generateAvatarUrl($item, $value): ?string
     {
-        return Storage::disk($item[$value . '_file_disk'])->temporaryUrl($item[$value . '_file_key'], Carbon::now()->addMinutes(config('filesystems.validity'))) ?? null;
+        $disk = $item[$value . '_file_disk'];
+        $key = $item[$value . '_file_key'];
+        $baseUrl = $item[$value . '_file_base_url'];
+
+        if ($disk === 's3') {
+            return $baseUrl . '/' . $key;
+        } else {
+            if($disk && $key) {
+                return Storage::disk($disk)->temporaryUrl($key, Carbon::now()->addMinutes(config('filesystems.validity')));
+            }
+
+            return '';
+        }
     }
 
     /**
