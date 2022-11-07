@@ -11,6 +11,7 @@ use Eawardie\DataGrid\Models\DataGrid;
 use Eawardie\DataGrid\Traits\DynamicCompare;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -193,6 +194,11 @@ class DataGridService
         $index = count($this->columns);
         $column['index'] = $index;
         $column['originalIndex'] = $index;
+
+        if ($column['type'] === 'enum' && count($column['enumerators']) === 0) {
+            $column['enumerators'] = $this->autoGenerateEnumerators($column['rawValue']);
+        }
+
         $this->columns[] = $column;
 
         return $this;
@@ -211,15 +217,7 @@ class DataGridService
         $enumerators = [];
 
         if ($type === 'enum') {
-            $cloned = clone $this->query;
-            $enumerators = $cloned->select(DB::raw('DISTINCT ' . $value . ' AS value'))
-                ->get()
-                ->mapWithKeys(function ($item) {
-                    $text = implode(' ', array_map('ucfirst', explode('_', $item->value)));
-
-                    return [$item->value => $text];
-                })
-                ->toArray();
+            $enumerators = $this->autoGenerateEnumerators($value);
         }
 
         $this->column($basicValue, $value, $label, $type, $index, $searchable, $sortable, [], $enumerators, $hidden);
@@ -468,6 +466,17 @@ class DataGridService
     //function to prepare final data grid meta data
     private function prepareMetaData(): void
     {
+        if (count($this->filters) > 0) {
+            $this->columns = collect($this->columns)->map(function ($column) {
+                $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
+                if (isset($this->filters[$value])) {
+                    $column['hidden'] = false;
+                }
+
+                return $column;
+            })->toArray();
+        }
+
         $this->metaData = [
             'tableRef' => $this->ref,
             'page' => $this->page,
@@ -702,10 +711,12 @@ class DataGridService
         if (count($this->filters) > 0) {
             foreach ($this->filters as $key => $filter) {
                 if (count($filter) > 0) {
-                    $clause = 'where';
+                    $clause = 'whereRaw';
                     $identifier = str_replace('_icon', '', $key);
                     $operator = $filter['operator'] === '===' ? '=' : $filter['operator'];
                     $column = collect($this->columns)->firstWhere('rawValue', $identifier);
+                    $isSubtitle = false;
+                    $isIcon = false;
 
                     if (!$column) {
                         $column = collect($this->columns)->firstWhere('value', $identifier);
@@ -713,35 +724,46 @@ class DataGridService
 
                     if (!$column) {
                         $column = collect($this->columns)->firstWhere('subtitle', $identifier);
+                        $isSubtitle = !!$column;
                     }
 
                     if (!$column) {
                         $column = collect($this->columns)->firstWhere('rawSubtitle', $identifier);
+                        $isSubtitle = !!$column;
                     }
 
                     if (!$column) {
                         $column = collect($this->columns)->firstWhere('iconConditionRawValue', $identifier);
+                        $isIcon = !!$column;
                     }
 
                     if (!$column) {
                         $column = collect($this->columns)->firstWhere('iconConditionValue', $identifier);
+                        $isIcon = !!$column;
                     }
 
                     if ($column) {
+                        if (isset($column['isAggregate']) && $column['isAggregate']) {
+                            $identifier = $column['value'];
+                            $clause = 'havingRaw';
+                        }
+
                         //find a better solution for time inclusive dates
                         if ($column['type'] === 'timestamp' && $operator === '=') {
                             $operator = 'LIKE';
                             $filter['value'] .= '%';
                         }
 
-                        if (isset($column['isAggregate']) && $column['isAggregate']) {
-                            $identifier = $column['value'];
-                            $clause = 'having';
+                        if ($isSubtitle) {
+                            $comparative = $column['rawSubtitle'];
+                        } else if ($isIcon) {
+                            $comparative = $column['iconConditionRawValue'];
+                        } else {
+                            $comparative = $column['rawValue'];
                         }
 
-                        if (!$column['hidden']) {
-                            $this->query->$clause($identifier, $operator, $filter['value']);
-                        }
+                        $evaluation = $comparative . ' ' . $operator . ' "' . $filter['value'] . '"';
+                        $this->query->$clause($evaluation);
                     }
                 }
             }
@@ -781,7 +803,8 @@ class DataGridService
         $hasIconColumns = count($iconColumns) > 0;
         $modifiedItems = [];
 
-        foreach ($items as $item) {
+        /** @var Model $item */
+        foreach ($data as $item) {
             if ($hasAvatarColumns) {
                 foreach ($avatarColumns as $column) {
                     $item[$column['value'] . '_avatar_url'] = $this->generateAvatarUrl($item, $column['value']);
@@ -792,24 +815,40 @@ class DataGridService
             }
 
             if ($hasIconColumns) {
-                $icon = $this->getIcon($item, $iconColumns);
-                $item = collect($item)->merge($icon)->toArray();
+                $icon = $this->getIcon($item->toArray(), $iconColumns);
+                foreach ($icon as $key => $value) {
+                    $item->setAttribute($key, $value);
+                }
             }
 
             if ($hasEnumColumns) {
                 foreach ($enumColumns as $enumColumn) {
-                    $item[$enumColumn['value']] = $enumColumn['enumerators'][$item[$enumColumn['value']]];
+                    if ($item[$enumColumn['value']]) {
+                        $item[$enumColumn['value']] = $enumColumn['enumerators'][$item[$enumColumn['value']]];
+                    }
                 }
             }
 
-            if ($this->rowMapClosure) {
+            if ($this->rowMapClosure && is_callable($this->rowMapClosure)) {
                 $item = call_user_func($this->rowMapClosure, $item);
             }
 
-            $modifiedItems[] = $item;
+            $modifiedItems[] = $item->toArray();
         }
 
         $this->items = $modifiedItems;
+    }
+
+    private function autoGenerateEnumerators(string $value): array
+    {
+        $cloned = clone $this->query;
+        return $cloned->select(DB::raw('DISTINCT ' . $value . ' AS value'))
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $text = implode(' ', array_map('ucfirst', explode('_', $item->value)));
+
+                return [$item->value => $text];
+            })->toArray();
     }
 
     //generates avatar URLs based on previously selected avatar values
@@ -822,7 +861,7 @@ class DataGridService
         if ($disk === 's3') {
             return $baseUrl . '/' . $key;
         } else {
-            if($disk && $key) {
+            if ($disk && $key) {
                 return Storage::disk($disk)->temporaryUrl($key, Carbon::now()->addMinutes(config('filesystems.validity')));
             }
 

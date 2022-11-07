@@ -57,14 +57,22 @@ class IconDefinition implements Arrayable
         return $this;
     }
 
+    //set a label for a column icon
+    public function label(string $label): self
+    {
+        $this->iconMap[0]['label'] = $label;
+
+        return $this;
+    }
+
     /**
      * @throws Throwable
      */
     //validates all icon conditions
     private function validateCondition(array $map, $index)
     {
-        throw_if(! $map['icon'], 'Icon is required on condition index '.$index);
-        throw_if(! $map['operator'], 'Operator is required on condition index '.$index);
+        throw_if(!$map['icon'], 'Icon is required on condition index ' . $index);
+        throw_if(!$map['operator'], 'Operator is required on condition index ' . $index);
     }
 
     /**
@@ -83,11 +91,11 @@ class IconDefinition implements Arrayable
     private function validateOperators()
     {
         foreach ($this->iconMap as $iconMap) {
-            if ((bool) $iconMap['operator'] && ! in_array($iconMap['operator'], self::AVAILABLE_OPERATORS)) {
+            if ((bool)$iconMap['operator'] && !in_array($iconMap['operator'], self::AVAILABLE_OPERATORS)) {
                 if ($iconMap['operator'] === '<>') {
-                    throw new Exception('The '.$iconMap['operator']." operator is not allowed. Did you mean '!='?");
+                    throw new Exception('The ' . $iconMap['operator'] . " operator is not allowed. Did you mean '!='?");
                 } else {
-                    throw new Exception('The '.$iconMap['operator'].' operator is not allowed. Allowed operators include ['.implode(', ', self::AVAILABLE_OPERATORS).']');
+                    throw new Exception('The ' . $iconMap['operator'] . ' operator is not allowed. Allowed operators include [' . implode(', ', self::AVAILABLE_OPERATORS) . ']');
                 }
             }
         }

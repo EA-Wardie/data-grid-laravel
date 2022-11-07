@@ -415,6 +415,12 @@ The function takes 5 possible parameters:
 The `default()` function is used to specify a default icon to display if none of the conditions evaluate to `true`.
 Also takes a color as a second parameter. this defaults to `grey`.
 
+#### `label()`
+
+The `label()` function is used to specify a label for the icon. This is displayed on the front-end filters menu.
+If no label is specified it defaults to the column label with an "(I)" attached.
+Specifying a label is recommended.
+
 ### `ViewDefinition`
 
 The `ViewDefinition` class is used to define views (layouts) for your data grid.

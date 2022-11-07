@@ -208,8 +208,6 @@ class ColumnDefinition implements Arrayable
             $this->enumerators = $items((new EnumDefinition())->toArray());
         }
 
-        $this->validateEnumerators();
-
         return $this;
     }
 
@@ -367,19 +365,9 @@ class ColumnDefinition implements Arrayable
     /**
      * @throws Throwable
      */
-    //validates the column enumerators
-    private function validateEnumerators()
-    {
-        throw_if(count($this->enumerators) === 0, 'Enumerators cannot be empty.');
-    }
-
-    /**
-     * @throws Throwable
-     */
     //validates the enumerator items to ensure they consist of key value pairs
     private function validateEnumeratorItems()
     {
-        throw_if($this->type === 'enum' && count($this->enumerators) === 0, "When using column type 'enum', enumerator items are required. Add at least one using enumerators().");
-        throw_if(count($this->enumerators) > 0 && $this->type !== 'enum', "Enumerator items specified with not 'enum' column type.");
+        throw_if(count($this->enumerators) > 0 && $this->type !== 'enum', "Enumerator items specified with column of type other then 'enum'.");
     }
 }
