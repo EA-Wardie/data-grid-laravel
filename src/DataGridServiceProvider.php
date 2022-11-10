@@ -11,7 +11,7 @@ class DataGridServiceProvider extends PackageServiceProvider
     {
         $package->name('data-grid')
             ->hasRoute('web')
-            ->hasMigration('create_datagrid_table');
+            ->hasMigrations('create_datagrid_table', 'alter_datagrid_table_change_configuration_type_to_text');
     }
 
     public function packageRegistered()

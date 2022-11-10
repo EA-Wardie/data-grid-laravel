@@ -823,7 +823,7 @@ class DataGridService
 
             if ($hasEnumColumns) {
                 foreach ($enumColumns as $enumColumn) {
-                    if ($item[$enumColumn['value']]) {
+                    if (isset($enumColumn['enumerators'][$item[$enumColumn['value']]]) && $item[$enumColumn['value']]) {
                         $item[$enumColumn['value']] = $enumColumn['enumerators'][$item[$enumColumn['value']]];
                     }
                 }

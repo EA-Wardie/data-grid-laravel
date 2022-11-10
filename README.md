@@ -43,7 +43,7 @@ Some initial setup is required. Most notably running the included migration of t
 You can publish and run the migrations with:
 
 ```bash
-php artisan vendor:publish --tag="data-grid-laravel-migrations"
+php artisan vendor:publish --tag="data-grid-migrations"
 php artisan migrate
 ```
 
