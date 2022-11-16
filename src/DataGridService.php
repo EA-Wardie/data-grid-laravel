@@ -2,7 +2,6 @@
 
 namespace Eawardie\DataGrid;
 
-use App\Classes\Utils\CloudfrontUrlGenerator;
 use Closure;
 use Eawardie\DataGrid\Definitions\ColumnDefinition;
 use Eawardie\DataGrid\Definitions\IconDefinition;
@@ -98,20 +97,6 @@ class DataGridService
     public function setRequest($request = []): self
     {
         $this->request = $request;
-
-        return $this;
-    }
-
-    //returns the current page
-    public function getPage(): int
-    {
-        return $this->page;
-    }
-
-    //sets the current page
-    public function setPage(): self
-    {
-        $this->page = $this->request->get('page', 1);
 
         return $this;
     }
@@ -300,10 +285,6 @@ class DataGridService
 
         $this->validateLayouts();
 
-        if (count($this->existingConfig['layouts']) > 0) {
-            $this->layouts = collect($this->layouts)->concat($this->existingConfig['layouts'])->toArray();
-        }
-
         return $this;
     }
 
@@ -368,6 +349,7 @@ class DataGridService
         $this->setTotals();
         $this->applyPaging();
         $this->setItems();
+        $this->setLayouts();
         $this->prepareMetaData();
 
         return [
@@ -410,8 +392,10 @@ class DataGridService
     {
         if (!$this->pageWithSession) {
             $this->page = $this->request->get('page', 1);
+            $this->itemsPerPage = $this->request->get('itemsPerPage', 50);
         } else {
             $this->page = session($this->ref)['page'] ?? 1;
+            $this->itemsPerPage = session($this->ref)['itemsPerPage'] ?? 50;
         }
     }
 
@@ -466,10 +450,10 @@ class DataGridService
     //function to prepare final data grid meta data
     private function prepareMetaData(): void
     {
-        if (count($this->filters) > 0) {
+        if (count($this->filters) > 0 || (isset($this->search['queries']) && count($this->search['queries']) > 0)) {
             $this->columns = collect($this->columns)->map(function ($column) {
                 $value = $column['isRaw'] ? $column['value'] : $column['rawValue'];
-                if (isset($this->filters[$value])) {
+                if (isset($this->filters[$value]) || isset($this->search['queries'][$value])) {
                     $column['hidden'] = false;
                 }
 
@@ -837,6 +821,12 @@ class DataGridService
         }
 
         $this->items = $modifiedItems;
+    }
+
+    private function setLayouts() {
+        if (count($this->existingConfig['layouts']) > 0) {
+            $this->layouts = collect($this->layouts)->concat($this->existingConfig['layouts'])->toArray();
+        }
     }
 
     private function autoGenerateEnumerators(string $value): array

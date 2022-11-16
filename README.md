@@ -104,33 +104,17 @@ The following section will explain every property available on the data grid ins
 
 Also, as mentioned above the `forQuery()` function is used to pass the actual data query to the data grid.
 
-### `getQuery()`
-
-The `getQuery()` function can be used to get an instance of the current data grid query.
-
 ### `setQuery()`
 
 The `setQuery()` function can be used to set the query of the data grid.
 
-### `getRquest()`
-
-The `getRequest()` function can be used to get the current page request.
-
-### `setRquest()`
+### `setRequest()`
 
 The `setRequest()` function can be used to set the current request.
-
-### `getPage()`
-
-The `getPage()` function can be used to get the current page number.
 
 ### `setPage()`
 
 The `setPage()` function can be used to set the current page number.
-
-### `getreference()`
-
-The `getreference()` function can be used to get the data grid reference.
 
 ### `defaultOrderBy()`
 

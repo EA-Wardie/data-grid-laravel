@@ -56,8 +56,10 @@ class DataGridController extends Controller
     {
         $ref = base64_decode($ref);
         $page = $request->get('page', 1);
+        $itemsPerPage = $request->get('itemsPerPage', 50);
         $session = session($ref);
         $session['page'] = $page;
+        $session['itemsPerPage'] = $itemsPerPage;
         session()->put($ref, $session);
 
         return redirect()->back();
