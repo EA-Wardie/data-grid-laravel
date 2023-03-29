@@ -817,7 +817,7 @@ class DataGridService
                 $item = call_user_func($this->rowMapClosure, $item);
             }
 
-            $modifiedItems[] = $item->toArray();
+            $modifiedItems[] = $item;
         }
 
         $this->items = $modifiedItems;
