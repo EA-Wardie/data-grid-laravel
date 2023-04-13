@@ -728,14 +728,18 @@ class DataGridService
 
                     if ($column) {
                         if (isset($column['isAggregate']) && $column['isAggregate']) {
-                            $identifier = $column['value'];
                             $clause = 'havingRaw';
                         }
 
                         //find a better solution for time inclusive dates
                         if ($column['type'] === 'timestamp' && $operator === '=') {
-                            $operator = 'LIKE';
-                            $filter['value'] .= '%';
+                            if($filter['value'] != null) {
+                                $operator = 'LIKE';
+                                $filter['value'] .= '%';
+                            } else {
+                                $operator = 'IS';
+                                $filter['value'] = ' NULL';
+                            }
                         }
 
                         if ($isSubtitle) {
@@ -746,7 +750,12 @@ class DataGridService
                             $comparative = $column['rawValue'];
                         }
 
-                        $evaluation = $comparative . ' ' . $operator . ' "' . $filter['value'] . '"';
+                        if($filter['value'] === ' NULL') {
+                            $evaluation = $comparative . ' ' . $operator . $filter['value'];
+                        } else {
+                            $evaluation = $comparative . ' ' . $operator . ' "' . $filter['value'] . '"';
+                        }
+
                         $this->query->$clause($evaluation);
                     }
                 }
